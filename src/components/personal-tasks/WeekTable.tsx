@@ -110,13 +110,7 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        if (
-                          confirm(
-                            "Are you sure you want to delete this swimlane?"
-                          )
-                        ) {
-                          onDeleteSwimlane(swimlane.swimlaneId);
-                        }
+                        onDeleteSwimlane(swimlane.swimlaneId);
                       }}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -183,13 +177,7 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                                 className="opacity-0 group-hover:opacity-100 h-6 w-6"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (
-                                    confirm(
-                                      "Are you sure you want to delete this task?"
-                                    )
-                                  ) {
-                                    onDeleteTask(task.taskId);
-                                  }
+                                  onDeleteTask(task.taskId);
                                 }}
                               >
                                 <X className="h-3 w-3" />
