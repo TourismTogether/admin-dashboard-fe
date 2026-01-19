@@ -16,9 +16,11 @@ import {
   useReactTable,
   createColumnHelper,
   getSortedRowModel,
+  getPaginationRowModel,
   SortingState,
+  PaginationState,
 } from "@tanstack/react-table";
-import { Trash2, ArrowDown, ArrowUp } from "lucide-react";
+import { Trash2, ArrowDown, ArrowUp, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface TableWeek {
   tableId: string;
@@ -35,6 +37,7 @@ interface TablesListProps {
   selectedTableId: string | null;
   onSelectTable: (tableId: string) => void;
   onDeleteTable?: (tableId: string) => void;
+  onEditTable?: (table: TableWeek) => void;
 }
 
 const columnHelper = createColumnHelper<TableWeek>();
@@ -44,15 +47,27 @@ export const TablesList: React.FC<TablesListProps> = ({
   selectedTableId,
   onSelectTable,
   onDeleteTable,
+  onEditTable,
 }) => {
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "week", desc: true },
   ]);
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 20,
+  });
 
   const handleDelete = (e: React.MouseEvent, tableId: string) => {
     e.stopPropagation();
     if (onDeleteTable) {
       onDeleteTable(tableId);
+    }
+  };
+
+  const handleEdit = (e: React.MouseEvent, table: TableWeek) => {
+    e.stopPropagation();
+    if (onEditTable) {
+      onEditTable(table);
     }
   };
 
@@ -169,29 +184,41 @@ export const TablesList: React.FC<TablesListProps> = ({
         ),
         size: 150,
       }),
-      ...(onDeleteTable
+      ...(onDeleteTable || onEditTable
         ? [
             columnHelper.display({
               id: "actions",
               header: () => <div className="text-right">Actions</div>,
-              size: 100,
+              size: 120,
               cell: ({ row }) => (
-                <div className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleDelete(e, row.original.tableId)}
-                    className="h-8 px-2 sm:px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                <div className="flex items-center justify-end gap-1">
+                  {onEditTable && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => handleEdit(e, row.original)}
+                      className="h-8 px-2 sm:px-3 hover:bg-primary/10"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {onDeleteTable && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => handleDelete(e, row.original.tableId)}
+                      className="h-8 px-2 sm:px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               ),
             }),
           ]
         : []),
     ],
-    [onDeleteTable]
+    [onDeleteTable, onEditTable]
   );
 
   const table = useReactTable({
@@ -199,11 +226,20 @@ export const TablesList: React.FC<TablesListProps> = ({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
+    onPaginationChange: setPagination,
     state: {
       sorting,
+      pagination,
     },
   });
+
+  const totalRows = tables.length;
+  const totalPages = table.getPageCount();
+  const currentPage = pagination.pageIndex + 1;
+  const startRow = pagination.pageIndex * pagination.pageSize + 1;
+  const endRow = Math.min((pagination.pageIndex + 1) * pagination.pageSize, totalRows);
 
   return (
     <div className="space-y-2">
@@ -270,6 +306,36 @@ export const TablesList: React.FC<TablesListProps> = ({
           </div>
         </div>
       </div>
+      
+      {/* Pagination */}
+      {totalRows > pagination.pageSize && (
+        <div className="flex items-center justify-between mt-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {startRow} to {endRow} of {totalRows} tables
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="px-3 text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

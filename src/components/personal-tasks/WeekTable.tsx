@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { format, addDays, parseISO } from "date-fns";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -45,6 +45,7 @@ interface WeekTableProps {
   onEditTask: (task: Task, swimlaneId: string, dayIndex: number) => void;
   onDeleteTask: (taskId: string, taskContent: string) => void;
   onMoveTask?: (taskId: string, newTaskDate: string, newSwimlaneId?: string) => void;
+  onCopyTask?: (task: Task) => void;
 }
 
 export const WeekTable: React.FC<WeekTableProps> = ({
@@ -57,6 +58,7 @@ export const WeekTable: React.FC<WeekTableProps> = ({
   onAddTask,
   onDeleteTask,
   onMoveTask,
+  onCopyTask,
 }) => {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragOverDayIndex, setDragOverDayIndex] = useState<number | null>(null);
@@ -330,17 +332,34 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                                   </span>
                                 </div>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="opacity-0 group-hover/task:opacity-100 h-6 w-6"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeleteTask(task.taskId, task.content);
-                                }}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
+                              <div className="flex items-center gap-1 opacity-0 group-hover/task:opacity-100">
+                                {onCopyTask && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onCopyTask(task);
+                                    }}
+                                    title="Copy task"
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteTask(task.taskId, task.content);
+                                  }}
+                                  title="Delete task"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         ))}

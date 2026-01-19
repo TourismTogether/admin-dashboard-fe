@@ -8,7 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface DeleteSwimlaneDialogProps {
   open: boolean;
@@ -31,38 +32,48 @@ export const DeleteSwimlaneDialog: React.FC<DeleteSwimlaneDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader className="space-y-4 pb-4">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-destructive/10 ring-8 ring-destructive/5 transition-all duration-200">
+              <AlertTriangle className="h-6 w-6 text-destructive animate-pulse" />
             </div>
-            <div>
-              <DialogTitle>Delete Swimlane</DialogTitle>
-              <DialogDescription className="mt-1">
-                This action cannot be undone.
+            <div className="flex-1 space-y-2 pt-1">
+              <DialogTitle className="text-xl font-semibold text-foreground">
+                Delete Swimlane
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                This action cannot be undone. This will permanently delete the swimlane and all associated tasks.
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
-        <div className="py-4">
-          <p className="text-sm text-muted-foreground">
-            Are you sure you want to delete this swimlane?
+        
+        <div className="space-y-4 py-4">
+          <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+            <p className="text-sm font-medium text-foreground mb-2">
+              Are you sure you want to delete this swimlane?
+            </p>
             {swimlaneName && (
-              <span className="block mt-2 font-medium text-foreground">
-                "{swimlaneName}"
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-destructive">
+                  "{swimlaneName}"
+                </span>
+              </div>
             )}
-            <span className="block mt-2">
-              This will permanently delete the swimlane and all associated tasks.
-            </span>
-          </p>
+          </div>
+          <div className="flex items-start gap-2 text-xs text-muted-foreground">
+            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+            <p>All tasks in this swimlane will be permanently deleted.</p>
+          </div>
         </div>
-        <DialogFooter>
+
+        <DialogFooter className="gap-2 sm:gap-0">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
+            className="flex-1 sm:flex-initial"
           >
             Cancel
           </Button>
@@ -70,8 +81,22 @@ export const DeleteSwimlaneDialog: React.FC<DeleteSwimlaneDialogProps> = ({
             variant="destructive"
             onClick={handleConfirm}
             disabled={isLoading}
+            className={cn(
+              "flex-1 sm:flex-initial gap-2",
+              isLoading && "opacity-50 cursor-not-allowed"
+            )}
           >
-            {isLoading ? "Deleting..." : "Delete"}
+            {isLoading ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4" />
+                Delete Swimlane
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

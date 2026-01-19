@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import {
   Table,
@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Eye, Trash2 } from "lucide-react";
+import { Eye, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface Task {
@@ -54,6 +54,22 @@ export const TaskSummaryTables: React.FC<TaskSummaryTablesProps> = ({
   const incompleteTasks = useMemo(() => {
     return allTasks.filter((task) => task.status !== "done");
   }, [allTasks]);
+
+  // Pagination state for completed tasks
+  const [donePage, setDonePage] = useState(1);
+  const donePageSize = 20;
+  const doneTotalPages = Math.ceil(doneTasks.length / donePageSize);
+  const doneStartIndex = (donePage - 1) * donePageSize;
+  const doneEndIndex = doneStartIndex + donePageSize;
+  const paginatedDoneTasks = doneTasks.slice(doneStartIndex, doneEndIndex);
+
+  // Pagination state for incomplete tasks
+  const [incompletePage, setIncompletePage] = useState(1);
+  const incompletePageSize = 20;
+  const incompleteTotalPages = Math.ceil(incompleteTasks.length / incompletePageSize);
+  const incompleteStartIndex = (incompletePage - 1) * incompletePageSize;
+  const incompleteEndIndex = incompleteStartIndex + incompletePageSize;
+  const paginatedIncompleteTasks = incompleteTasks.slice(incompleteStartIndex, incompleteEndIndex);
 
   // Get swimlane name by ID
   const getSwimlaneName = (swimlaneId: string): string => {
@@ -114,7 +130,7 @@ export const TaskSummaryTables: React.FC<TaskSummaryTablesProps> = ({
                   </TableCell>
                 </TableRow>
               ) : (
-                doneTasks.map((task) => (
+                paginatedDoneTasks.map((task) => (
                   <TableRow key={task.taskId}>
                     <TableCell className="font-medium max-w-[300px] truncate" title={task.content}>
                       {task.content}
@@ -162,6 +178,36 @@ export const TaskSummaryTables: React.FC<TaskSummaryTablesProps> = ({
             </TableBody>
           </Table>
         </div>
+        
+        {/* Pagination for Completed Tasks */}
+        {doneTasks.length > donePageSize && (
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {doneStartIndex + 1} to {Math.min(doneEndIndex, doneTasks.length)} of {doneTasks.length} tasks
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDonePage((p) => Math.max(1, p - 1))}
+                disabled={donePage <= 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="px-3 text-sm">
+                Page {donePage} of {doneTotalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDonePage((p) => Math.min(doneTotalPages, p + 1))}
+                disabled={donePage >= doneTotalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Incomplete Tasks Table */}
@@ -187,7 +233,7 @@ export const TaskSummaryTables: React.FC<TaskSummaryTablesProps> = ({
                   </TableCell>
                 </TableRow>
               ) : (
-                incompleteTasks.map((task) => (
+                paginatedIncompleteTasks.map((task) => (
                   <TableRow key={task.taskId}>
                     <TableCell className="font-medium max-w-[300px] truncate" title={task.content}>
                       {task.content}
@@ -235,6 +281,36 @@ export const TaskSummaryTables: React.FC<TaskSummaryTablesProps> = ({
             </TableBody>
           </Table>
         </div>
+        
+        {/* Pagination for Incomplete Tasks */}
+        {incompleteTasks.length > incompletePageSize && (
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {incompleteStartIndex + 1} to {Math.min(incompleteEndIndex, incompleteTasks.length)} of {incompleteTasks.length} tasks
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIncompletePage((p) => Math.max(1, p - 1))}
+                disabled={incompletePage <= 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="px-3 text-sm">
+                Page {incompletePage} of {incompleteTotalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIncompletePage((p) => Math.min(incompleteTotalPages, p + 1))}
+                disabled={incompletePage >= incompleteTotalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

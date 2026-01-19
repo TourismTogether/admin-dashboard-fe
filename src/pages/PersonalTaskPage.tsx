@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api";
 import { CreateTableDialog } from "@/components/personal-tasks/CreateTableDialog";
+import { EditTableDialog } from "@/components/personal-tasks/EditTableDialog";
 import { CreateSwimlaneDialog } from "@/components/personal-tasks/CreateSwimlaneDialog";
 import { TaskDialog } from "@/components/personal-tasks/TaskDialog";
 import { TablesList } from "@/components/personal-tasks/TablesList";
@@ -58,6 +59,8 @@ interface TableWithSwimlanes extends TableWeek {
 const PersonalTaskPage: React.FC = () => {
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [isCreateTableOpen, setIsCreateTableOpen] = useState(false);
+  const [isEditTableOpen, setIsEditTableOpen] = useState(false);
+  const [editingTable, setEditingTable] = useState<TableWeek | null>(null);
   const [isCreateSwimlaneOpen, setIsCreateSwimlaneOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [isDeleteTableOpen, setIsDeleteTableOpen] = useState(false);
@@ -193,6 +196,28 @@ const PersonalTaskPage: React.FC = () => {
     },
     onError: (error: Error) => {
       toast.error(`Failed to create table: ${error.message}`);
+    },
+  });
+
+  // Update table mutation
+  const updateTableMutation = useMutation({
+    mutationFn: async ({ tableId, ...data }: { tableId: string; startDate: string; week: number; description?: string }) => {
+      const response = await apiRequest(`/api/personal-tasks/tables/${tableId}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update table");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["personal-tasks", "tables"] });
+      queryClient.invalidateQueries({ queryKey: ["personal-tasks", "table", selectedTableId] });
+      setIsEditTableOpen(false);
+      setEditingTable(null);
+      toast.success("Table updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update table: ${error.message}`);
     },
   });
 
@@ -355,8 +380,49 @@ const PersonalTaskPage: React.FC = () => {
     },
   });
 
+  // Copy task mutation (creates a new task with same data)
+  const copyTaskMutation = useMutation({
+    mutationFn: async (task: Task) => {
+      const response = await apiRequest("/api/personal-tasks/tasks", {
+        method: "POST",
+        body: JSON.stringify({
+          swimlaneId: task.swimlaneId,
+          content: `${task.content} (Copy)`,
+          status: task.status,
+          priority: task.priority,
+          taskDate: task.taskDate,
+          detail: task.detail,
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to copy task");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["personal-tasks", "table", selectedTableId],
+      });
+      toast.success("Task copied successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to copy task: ${error.message}`);
+    },
+  });
+
   const handleCreateTable = (startDate: string, week: number, description?: string) => {
     createTableMutation.mutate({ startDate, week, description });
+  };
+
+  const handleEditTable = (table: TableWeek) => {
+    setEditingTable(table);
+    setIsEditTableOpen(true);
+  };
+
+  const handleUpdateTable = (tableId: string, startDate: string, week: number, description?: string) => {
+    updateTableMutation.mutate({ tableId, startDate, week, description });
+  };
+
+  const handleCopyTask = (task: Task) => {
+    copyTaskMutation.mutate(task);
   };
 
   const handleCreateSwimlane = (data: { 
@@ -614,11 +680,20 @@ const PersonalTaskPage: React.FC = () => {
         isLoading={createTableMutation.isPending}
       />
 
+      <EditTableDialog
+        open={isEditTableOpen}
+        onOpenChange={setIsEditTableOpen}
+        onUpdate={handleUpdateTable}
+        table={editingTable}
+        isLoading={updateTableMutation.isPending}
+      />
+
       <TablesList
         tables={filteredTables}
         selectedTableId={selectedTableId}
         onSelectTable={setSelectedTableId}
         onDeleteTable={handleDeleteTable}
+        onEditTable={handleEditTable}
       />
 
         {tableData?.data && (
@@ -633,6 +708,7 @@ const PersonalTaskPage: React.FC = () => {
               onEditTask={handleEditTask}
               onDeleteTask={handleDeleteTask}
               onMoveTask={handleMoveTask}
+              onCopyTask={handleCopyTask}
             />
 
             <CreateSwimlaneDialog
