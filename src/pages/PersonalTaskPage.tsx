@@ -14,6 +14,9 @@ import { WeekTable } from "@/components/personal-tasks/WeekTable";
 import { DeleteTableDialog } from "@/components/personal-tasks/DeleteTableDialog";
 import { DeleteSwimlaneDialog } from "@/components/personal-tasks/DeleteSwimlaneDialog";
 import { DeleteTaskDialog } from "@/components/personal-tasks/DeleteTaskDialog";
+import { TaskSummaryTables } from "@/components/personal-tasks/TaskSummaryTables";
+import { TaskDetailDialog } from "@/components/personal-tasks/TaskDetailDialog";
+import { PerformanceStats } from "@/components/personal-tasks/PerformanceStats";
 
 interface TableWeek {
   tableId: string;
@@ -43,7 +46,7 @@ interface Task {
   status: string;
   priority: string;
   detail?: string;
-  taskDate?: string;
+  taskDate: string; // Required, not optional
   createdAt: string;
   updatedAt: string;
 }
@@ -60,6 +63,8 @@ const PersonalTaskPage: React.FC = () => {
   const [isDeleteTableOpen, setIsDeleteTableOpen] = useState(false);
   const [isDeleteSwimlaneOpen, setIsDeleteSwimlaneOpen] = useState(false);
   const [isDeleteTaskOpen, setIsDeleteTaskOpen] = useState(false);
+  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [tableToDelete, setTableToDelete] = useState<{
     tableId: string;
     week: number;
@@ -270,6 +275,7 @@ const PersonalTaskPage: React.FC = () => {
       status?: string;
       priority?: string;
       taskDate: string;
+      detail?: string;
     }) => {
       const response = await apiRequest("/api/personal-tasks/tasks", {
         method: "POST",
@@ -301,6 +307,9 @@ const PersonalTaskPage: React.FC = () => {
       content?: string;
       status?: string;
       priority?: string;
+      detail?: string;
+      taskDate?: string;
+      swimlaneId?: string;
     }) => {
       const response = await apiRequest(`/api/personal-tasks/tasks/${taskId}`, {
         method: "PUT",
@@ -314,7 +323,9 @@ const PersonalTaskPage: React.FC = () => {
         queryKey: ["personal-tasks", "table", selectedTableId],
       });
       setIsTaskDialogOpen(false);
+      setIsTaskDetailOpen(false);
       setEditingTask(null);
+      setViewingTask(null);
       toast.success("Task updated successfully");
     },
     onError: (error: Error) => {
@@ -396,7 +407,8 @@ const PersonalTaskPage: React.FC = () => {
     content: string,
     status: string,
     priority: string,
-    taskDate: string
+    taskDate: string,
+    detail?: string
   ) => {
     if (!editingTask) return;
 
@@ -406,6 +418,7 @@ const PersonalTaskPage: React.FC = () => {
         content,
         status,
         priority,
+        detail,
       });
     } else {
       createTaskMutation.mutate({
@@ -414,6 +427,7 @@ const PersonalTaskPage: React.FC = () => {
         status,
         priority,
         taskDate,
+        detail,
       });
     }
   };
@@ -437,17 +451,12 @@ const PersonalTaskPage: React.FC = () => {
     }
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    const task = tableData?.data?.swimlanes
-      ?.flatMap((s) => s.tasks || [])
-      .find((t) => t.taskId === taskId);
-    if (task) {
-      setTaskToDelete({
-        taskId,
-        content: task.content,
-      });
-      setIsDeleteTaskOpen(true);
-    }
+  const handleDeleteTask = (taskId: string, taskContent: string) => {
+    setTaskToDelete({
+      taskId,
+      content: taskContent,
+    });
+    setIsDeleteTaskOpen(true);
   };
 
   const handleConfirmDeleteTask = () => {
@@ -456,13 +465,55 @@ const PersonalTaskPage: React.FC = () => {
     }
   };
 
+  const handleViewTask = (task: Task) => {
+    setViewingTask(task);
+    setIsTaskDetailOpen(true);
+  };
+
+  const handleSaveTaskDetail = (
+    taskId: string,
+    content: string,
+    status: string,
+    priority: string,
+    detail?: string
+  ) => {
+    updateTaskMutation.mutate({
+      taskId,
+      content,
+      status,
+      priority,
+      detail,
+    });
+  };
+
+  const handleMoveTask = (taskId: string, newTaskDate: string, newSwimlaneId?: string) => {
+    updateTaskMutation.mutate({
+      taskId,
+      taskDate: newTaskDate,
+      swimlaneId: newSwimlaneId,
+    });
+  };
+
   // Get task date for dialog
   const getTaskDate = (): string => {
     if (!editingTask || !tableData?.data) return "";
-    const weekDays = Array.from({ length: 7 }, (_, i) =>
-      addDays(parseISO(tableData.data.startDate), i)
-    );
-    return format(weekDays[editingTask.dayIndex], "yyyy-MM-dd");
+    // Parse startDate as a date string (YYYY-MM-DD) without timezone issues
+    const startDateStr = tableData.data.startDate;
+    // If startDate is already in YYYY-MM-DD format, use it directly
+    // Otherwise parse it and format it
+    let startDate: Date;
+    if (startDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      // It's already in YYYY-MM-DD format, create date in local timezone
+      const [year, month, day] = startDateStr.split('-').map(Number);
+      startDate = new Date(year, month - 1, day);
+    } else {
+      // Parse ISO string and use local date
+      const parsed = parseISO(startDateStr);
+      startDate = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+    }
+    // Add days to get the target date
+    const targetDate = addDays(startDate, editingTask.dayIndex);
+    return format(targetDate, "yyyy-MM-dd");
   };
 
   return (
@@ -570,27 +621,39 @@ const PersonalTaskPage: React.FC = () => {
         onDeleteTable={handleDeleteTable}
       />
 
-      {tableData?.data && (
-        <>
-          <WeekTable
-            startDate={tableData.data.startDate}
-            week={tableData.data.week}
-            swimlanes={tableData.data.swimlanes}
-            onAddSwimlane={() => setIsCreateSwimlaneOpen(true)}
-            onDeleteSwimlane={handleDeleteSwimlane}
-            onAddTask={handleAddTask}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-          />
+        {tableData?.data && (
+          <>
+            <WeekTable
+              startDate={tableData.data.startDate}
+              week={tableData.data.week}
+              swimlanes={tableData.data.swimlanes}
+              onAddSwimlane={() => setIsCreateSwimlaneOpen(true)}
+              onDeleteSwimlane={handleDeleteSwimlane}
+              onAddTask={handleAddTask}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTask}
+              onMoveTask={handleMoveTask}
+            />
 
-          <CreateSwimlaneDialog
-            open={isCreateSwimlaneOpen}
-            onOpenChange={setIsCreateSwimlaneOpen}
-            onCreate={handleCreateSwimlane}
-            isLoading={createSwimlaneMutation.isPending}
-          />
-        </>
-      )}
+            <CreateSwimlaneDialog
+              open={isCreateSwimlaneOpen}
+              onOpenChange={setIsCreateSwimlaneOpen}
+              onCreate={handleCreateSwimlane}
+              isLoading={createSwimlaneMutation.isPending}
+            />
+
+            <TaskSummaryTables
+              swimlanes={tableData.data.swimlanes}
+              onViewTask={handleViewTask}
+              onDeleteTask={handleDeleteTask}
+            />
+
+            <PerformanceStats
+              swimlanes={tableData.data.swimlanes}
+              startDate={tableData.data.startDate}
+            />
+          </>
+        )}
 
       <TaskDialog
         task={editingTask?.task || null}
@@ -629,6 +692,14 @@ const PersonalTaskPage: React.FC = () => {
         onConfirm={handleConfirmDeleteTask}
         isLoading={deleteTaskMutation.isPending}
         taskContent={taskToDelete?.content}
+      />
+
+      <TaskDetailDialog
+        task={viewingTask}
+        open={isTaskDetailOpen}
+        onOpenChange={setIsTaskDetailOpen}
+        onSave={handleSaveTaskDetail}
+        isLoading={updateTaskMutation.isPending}
       />
     </div>
   );
