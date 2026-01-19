@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { format, addDays, parseISO } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Search, Filter, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api";
 import { CreateTableDialog } from "@/components/personal-tasks/CreateTableDialog";
@@ -10,6 +11,9 @@ import { CreateSwimlaneDialog } from "@/components/personal-tasks/CreateSwimlane
 import { TaskDialog } from "@/components/personal-tasks/TaskDialog";
 import { TablesList } from "@/components/personal-tasks/TablesList";
 import { WeekTable } from "@/components/personal-tasks/WeekTable";
+import { DeleteTableDialog } from "@/components/personal-tasks/DeleteTableDialog";
+import { DeleteSwimlaneDialog } from "@/components/personal-tasks/DeleteSwimlaneDialog";
+import { DeleteTaskDialog } from "@/components/personal-tasks/DeleteTaskDialog";
 
 interface TableWeek {
   tableId: string;
@@ -53,16 +57,38 @@ const PersonalTaskPage: React.FC = () => {
   const [isCreateTableOpen, setIsCreateTableOpen] = useState(false);
   const [isCreateSwimlaneOpen, setIsCreateSwimlaneOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [isDeleteTableOpen, setIsDeleteTableOpen] = useState(false);
+  const [isDeleteSwimlaneOpen, setIsDeleteSwimlaneOpen] = useState(false);
+  const [isDeleteTaskOpen, setIsDeleteTaskOpen] = useState(false);
+  const [tableToDelete, setTableToDelete] = useState<{
+    tableId: string;
+    week: number;
+    startDate: string;
+  } | null>(null);
+  const [swimlaneToDelete, setSwimlaneToDelete] = useState<{
+    swimlaneId: string;
+    name: string;
+  } | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<{
+    taskId: string;
+    content: string;
+  } | null>(null);
   const [editingTask, setEditingTask] = useState<{
     task: Task | null;
     swimlaneId: string;
     dayIndex: number;
   } | null>(null);
 
+  // Search and filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [weekFilter, setWeekFilter] = useState<number | null>(null);
+  const [startDateFilter, setStartDateFilter] = useState("");
+  const [endDateFilter, setEndDateFilter] = useState("");
+
   const queryClient = useQueryClient();
 
   // Fetch all tables
-  const { data: tablesData } = useQuery<{ data: TableWeek[] }>({
+  const { data: tablesData, isLoading: isLoadingTables, refetch: refetchTables } = useQuery<{ data: TableWeek[] }>({
     queryKey: ["personal-tasks", "tables"],
     queryFn: async () => {
       const response = await apiRequest("/api/personal-tasks/tables");
@@ -70,6 +96,63 @@ const PersonalTaskPage: React.FC = () => {
       return response.json();
     },
   });
+
+  // Filter and search tables
+  const filteredTables = useMemo(() => {
+    if (!tablesData?.data) return [];
+    
+    let filtered = tablesData.data;
+
+    // Search filter (by description or week)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (table) =>
+          table.description?.toLowerCase().includes(query) ||
+          table.week.toString().includes(query) ||
+          format(parseISO(table.startDate), "MMM d, yyyy").toLowerCase().includes(query)
+      );
+    }
+
+    // Week filter
+    if (weekFilter !== null) {
+      filtered = filtered.filter((table) => table.week === weekFilter);
+    }
+
+    // Date range filter
+    if (startDateFilter) {
+      filtered = filtered.filter(
+        (table) => table.startDate >= startDateFilter
+      );
+    }
+
+    if (endDateFilter) {
+      filtered = filtered.filter(
+        (table) => table.startDate <= endDateFilter
+      );
+    }
+
+    return filtered;
+  }, [tablesData?.data, searchQuery, weekFilter, startDateFilter, endDateFilter]);
+
+  // Get unique weeks for filter
+  const availableWeeks = useMemo(() => {
+    if (!tablesData?.data) return [];
+    const weeks = new Set(tablesData.data.map((t) => t.week));
+    return Array.from(weeks).sort((a, b) => b - a);
+  }, [tablesData?.data]);
+
+  const handleRefresh = () => {
+    refetchTables();
+    toast.success("Tables refreshed");
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setWeekFilter(null);
+    setStartDateFilter("");
+    setEndDateFilter("");
+  };
 
   // Fetch selected table with swimlanes and tasks
   const { data: tableData } = useQuery<{ data: TableWithSwimlanes }>({
@@ -87,7 +170,7 @@ const PersonalTaskPage: React.FC = () => {
 
   // Create table mutation
   const createTableMutation = useMutation({
-    mutationFn: async (data: { startDate: string; week: number }) => {
+    mutationFn: async (data: { startDate: string; week: number; description?: string }) => {
       const response = await apiRequest("/api/personal-tasks/tables", {
         method: "POST",
         body: JSON.stringify(data),
@@ -110,7 +193,12 @@ const PersonalTaskPage: React.FC = () => {
 
   // Create swimlane mutation
   const createSwimlaneMutation = useMutation({
-    mutationFn: async (data: { tableId: string; content: string }) => {
+    mutationFn: async (data: { 
+      tableId: string; 
+      content: string; 
+      startTime?: string; 
+      duration?: number;
+    }) => {
       const response = await apiRequest("/api/personal-tasks/swimlanes", {
         method: "POST",
         body: JSON.stringify(data),
@@ -130,6 +218,27 @@ const PersonalTaskPage: React.FC = () => {
     },
   });
 
+  // Delete table mutation
+  const deleteTableMutation = useMutation({
+    mutationFn: async (tableId: string) => {
+      const response = await apiRequest(`/api/personal-tasks/tables/${tableId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete table");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["personal-tasks", "tables"] });
+      if (selectedTableId) {
+        setSelectedTableId(null);
+      }
+      toast.success("Table deleted successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete table: ${error.message}`);
+    },
+  });
+
   // Delete swimlane mutation
   const deleteSwimlaneMutation = useMutation({
     mutationFn: async (swimlaneId: string) => {
@@ -144,6 +253,8 @@ const PersonalTaskPage: React.FC = () => {
       queryClient.invalidateQueries({
         queryKey: ["personal-tasks", "table", selectedTableId],
       });
+      setIsDeleteSwimlaneOpen(false);
+      setSwimlaneToDelete(null);
       toast.success("Swimlane deleted successfully");
     },
     onError: (error: Error) => {
@@ -224,6 +335,8 @@ const PersonalTaskPage: React.FC = () => {
       queryClient.invalidateQueries({
         queryKey: ["personal-tasks", "table", selectedTableId],
       });
+      setIsDeleteTaskOpen(false);
+      setTaskToDelete(null);
       toast.success("Task deleted successfully");
     },
     onError: (error: Error) => {
@@ -231,13 +344,42 @@ const PersonalTaskPage: React.FC = () => {
     },
   });
 
-  const handleCreateTable = (startDate: string, week: number) => {
-    createTableMutation.mutate({ startDate, week });
+  const handleCreateTable = (startDate: string, week: number, description?: string) => {
+    createTableMutation.mutate({ startDate, week, description });
   };
 
-  const handleCreateSwimlane = (content: string) => {
+  const handleCreateSwimlane = (data: { 
+    content: string; 
+    startTime?: string; 
+    duration?: number;
+  }) => {
     if (!selectedTableId) return;
-    createSwimlaneMutation.mutate({ tableId: selectedTableId, content });
+    createSwimlaneMutation.mutate({ 
+      tableId: selectedTableId, 
+      content: data.content,
+      startTime: data.startTime,
+      duration: data.duration,
+    });
+  };
+
+  const handleDeleteTable = (tableId: string) => {
+    const table = tablesData?.data?.find((t) => t.tableId === tableId);
+    if (table) {
+      setTableToDelete({
+        tableId,
+        week: table.week,
+        startDate: table.startDate,
+      });
+      setIsDeleteTableOpen(true);
+    }
+  };
+
+  const handleConfirmDeleteTable = () => {
+    if (tableToDelete) {
+      deleteTableMutation.mutate(tableToDelete.tableId);
+      setIsDeleteTableOpen(false);
+      setTableToDelete(null);
+    }
   };
 
   const handleAddTask = (swimlaneId: string, dayIndex: number) => {
@@ -276,8 +418,42 @@ const PersonalTaskPage: React.FC = () => {
     }
   };
 
+  const handleDeleteSwimlane = (swimlaneId: string) => {
+    const swimlane = tableData?.data?.swimlanes?.find(
+      (s) => s.swimlaneId === swimlaneId
+    );
+    if (swimlane) {
+      setSwimlaneToDelete({
+        swimlaneId,
+        name: swimlane.content,
+      });
+      setIsDeleteSwimlaneOpen(true);
+    }
+  };
+
+  const handleConfirmDeleteSwimlane = () => {
+    if (swimlaneToDelete) {
+      deleteSwimlaneMutation.mutate(swimlaneToDelete.swimlaneId);
+    }
+  };
+
   const handleDeleteTask = (taskId: string) => {
-    deleteTaskMutation.mutate(taskId);
+    const task = tableData?.data?.swimlanes
+      ?.flatMap((s) => s.tasks || [])
+      .find((t) => t.taskId === taskId);
+    if (task) {
+      setTaskToDelete({
+        taskId,
+        content: task.content,
+      });
+      setIsDeleteTaskOpen(true);
+    }
+  };
+
+  const handleConfirmDeleteTask = () => {
+    if (taskToDelete) {
+      deleteTaskMutation.mutate(taskToDelete.taskId);
+    }
   };
 
   // Get task date for dialog
@@ -290,13 +466,94 @@ const PersonalTaskPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Personal Tasks</h1>
-        <Button onClick={() => setIsCreateTableOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create New Table
-        </Button>
+    <div className="p-2 sm:p-4 md:p-6 space-y-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <h1 className="text-xl sm:text-2xl font-semibold">Personal Tasks</h1>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isLoadingTables}
+            className="shrink-0"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${isLoadingTables ? "animate-spin" : ""}`}
+            />
+          </Button>
+          <Button onClick={() => setIsCreateTableOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create New Table
+          </Button>
+        </div>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="space-y-3">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="🔍 Search by description, week, or date..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <select
+              value={weekFilter === null ? "" : weekFilter}
+              onChange={(e) =>
+                setWeekFilter(e.target.value ? Number(e.target.value) : null)
+              }
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <option value="">All Weeks</option>
+              {availableWeeks.map((week) => (
+                <option key={week} value={week}>
+                  Week {week}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+              From:
+            </span>
+            <Input
+              type="date"
+              value={startDateFilter}
+              onChange={(e) => setStartDateFilter(e.target.value)}
+              className="w-full sm:w-auto"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+              To:
+            </span>
+            <Input
+              type="date"
+              value={endDateFilter}
+              onChange={(e) => setEndDateFilter(e.target.value)}
+              className="w-full sm:w-auto"
+            />
+          </div>
+          {(searchQuery || weekFilter !== null || startDateFilter || endDateFilter) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearFilters}
+            >
+              Clear Filters
+            </Button>
+          )}
+        </div>
       </div>
 
       <CreateTableDialog
@@ -307,9 +564,10 @@ const PersonalTaskPage: React.FC = () => {
       />
 
       <TablesList
-        tables={tablesData?.data || []}
+        tables={filteredTables}
         selectedTableId={selectedTableId}
         onSelectTable={setSelectedTableId}
+        onDeleteTable={handleDeleteTable}
       />
 
       {tableData?.data && (
@@ -319,9 +577,7 @@ const PersonalTaskPage: React.FC = () => {
             week={tableData.data.week}
             swimlanes={tableData.data.swimlanes}
             onAddSwimlane={() => setIsCreateSwimlaneOpen(true)}
-            onDeleteSwimlane={(swimlaneId) =>
-              deleteSwimlaneMutation.mutate(swimlaneId)
-            }
+            onDeleteSwimlane={handleDeleteSwimlane}
             onAddTask={handleAddTask}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
@@ -342,6 +598,37 @@ const PersonalTaskPage: React.FC = () => {
         open={isTaskDialogOpen}
         onOpenChange={setIsTaskDialogOpen}
         onSave={handleSaveTask}
+      />
+
+      <DeleteTableDialog
+        open={isDeleteTableOpen}
+        onOpenChange={setIsDeleteTableOpen}
+        onConfirm={handleConfirmDeleteTable}
+        isLoading={deleteTableMutation.isPending}
+        tableInfo={
+          tableToDelete
+            ? {
+                week: tableToDelete.week,
+                startDate: tableToDelete.startDate,
+              }
+            : undefined
+        }
+      />
+
+      <DeleteSwimlaneDialog
+        open={isDeleteSwimlaneOpen}
+        onOpenChange={setIsDeleteSwimlaneOpen}
+        onConfirm={handleConfirmDeleteSwimlane}
+        isLoading={deleteSwimlaneMutation.isPending}
+        swimlaneName={swimlaneToDelete?.name}
+      />
+
+      <DeleteTaskDialog
+        open={isDeleteTaskOpen}
+        onOpenChange={setIsDeleteTaskOpen}
+        onConfirm={handleConfirmDeleteTask}
+        isLoading={deleteTaskMutation.isPending}
+        taskContent={taskToDelete?.content}
       />
     </div>
   );

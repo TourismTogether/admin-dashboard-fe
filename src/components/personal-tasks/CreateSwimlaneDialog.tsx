@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 interface CreateSwimlaneDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (content: string) => void;
+  onCreate: (data: { content: string; startTime?: string; duration?: number }) => void;
   isLoading?: boolean;
 }
 
@@ -25,11 +25,26 @@ export const CreateSwimlaneDialog: React.FC<CreateSwimlaneDialogProps> = ({
   isLoading = false,
 }) => {
   const [content, setContent] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [duration, setDuration] = useState("");
 
   const handleCreate = () => {
     if (!content.trim()) return;
-    onCreate(content);
+    onCreate({
+      content,
+      startTime: startTime.trim() || undefined,
+      duration: duration ? parseInt(duration, 10) : undefined,
+    });
     setContent("");
+    setStartTime("");
+    setDuration("");
+  };
+
+  const handleClose = () => {
+    onOpenChange(false);
+    setContent("");
+    setStartTime("");
+    setDuration("");
   };
 
   return (
@@ -43,7 +58,7 @@ export const CreateSwimlaneDialog: React.FC<CreateSwimlaneDialogProps> = ({
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="swimlane-content">Content</Label>
+            <Label htmlFor="swimlane-content">Content *</Label>
             <Input
               id="swimlane-content"
               value={content}
@@ -56,14 +71,32 @@ export const CreateSwimlaneDialog: React.FC<CreateSwimlaneDialogProps> = ({
               }}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="swimlane-start-time">Start Time</Label>
+            <Input
+              id="swimlane-start-time"
+              type="time"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              placeholder="HH:MM"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="swimlane-duration">Duration (minutes)</Label>
+            <Input
+              id="swimlane-duration"
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder="Enter duration in minutes"
+              min="0"
+            />
+          </div>
         </div>
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => {
-              onOpenChange(false);
-              setContent("");
-            }}
+            onClick={handleClose}
             disabled={isLoading}
           >
             Cancel

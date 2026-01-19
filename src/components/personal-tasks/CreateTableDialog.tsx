@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -22,7 +23,7 @@ import { cn } from "@/lib/utils";
 interface CreateTableDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (startDate: string, week: number) => void;
+  onCreate: (startDate: string, week: number, description?: string) => void;
   isLoading?: boolean;
 }
 
@@ -33,11 +34,17 @@ export const CreateTableDialog: React.FC<CreateTableDialogProps> = ({
   isLoading = false,
 }) => {
   const [startDate, setStartDate] = useState<Date>(new Date());
+  const [description, setDescription] = useState("");
 
   const handleCreate = () => {
     const weekStart = startOfWeek(startDate, { weekStartsOn: 1 });
     const week = getWeek(weekStart, { weekStartsOn: 1 });
-    onCreate(format(weekStart, "yyyy-MM-dd"), week);
+    onCreate(format(weekStart, "yyyy-MM-dd"), week, description.trim() || undefined);
+  };
+
+  const handleClose = () => {
+    onOpenChange(false);
+    setDescription("");
   };
 
   return (
@@ -76,11 +83,25 @@ export const CreateTableDialog: React.FC<CreateTableDialogProps> = ({
               </PopoverContent>
             </Popover>
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="table-description">Description (Optional)</Label>
+            <Input
+              id="table-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter table description"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !isLoading) {
+                  handleCreate();
+                }
+              }}
+            />
+          </div>
         </div>
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={handleClose}
             disabled={isLoading}
           >
             Cancel
