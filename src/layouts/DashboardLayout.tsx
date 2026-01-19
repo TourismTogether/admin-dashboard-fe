@@ -1,13 +1,18 @@
 import React from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
+import { logout, selectAuthUser } from "@/store/authSlice";
+import type { AppDispatch } from "@/store/store";
 
 const DashboardLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch<AppDispatch>();
+  const user = useSelector(selectAuthUser);
 
   const handleLogout = () => {
-    // TODO: Implement logout logic
+    dispatch(logout());
     navigate("/login");
   };
 
@@ -20,6 +25,11 @@ const DashboardLayout: React.FC = () => {
     <div className="dashboard-layout flex h-screen">
       <aside className="w-64 bg-gray-100 p-4 border-r border-gray-300 flex flex-col">
         <div className="font-bold text-xl mb-4">Admin Dashboard</div>
+        {user && (
+          <div className="text-sm text-gray-600 mb-4">
+            {user.email}
+          </div>
+        )}
         <nav className="flex-grow space-y-1">
           {navItems.map((item) => (
             <Link

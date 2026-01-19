@@ -4,13 +4,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { apiRequest } from "@/lib/api";
 import { CreateTableDialog } from "@/components/personal-tasks/CreateTableDialog";
 import { CreateSwimlaneDialog } from "@/components/personal-tasks/CreateSwimlaneDialog";
 import { TaskDialog } from "@/components/personal-tasks/TaskDialog";
 import { TablesList } from "@/components/personal-tasks/TablesList";
 import { WeekTable } from "@/components/personal-tasks/WeekTable";
-
-const API_URL = (import.meta.env.VITE_API_URL as string) || "http://localhost:8081";
 
 interface TableWeek {
   tableId: string;
@@ -66,7 +65,7 @@ const PersonalTaskPage: React.FC = () => {
   const { data: tablesData } = useQuery<{ data: TableWeek[] }>({
     queryKey: ["personal-tasks", "tables"],
     queryFn: async () => {
-      const response = await fetch(`${API_URL}/api/personal-tasks/tables`);
+      const response = await apiRequest("/api/personal-tasks/tables");
       if (!response.ok) throw new Error("Failed to fetch tables");
       return response.json();
     },
@@ -77,8 +76,8 @@ const PersonalTaskPage: React.FC = () => {
     queryKey: ["personal-tasks", "table", selectedTableId],
     queryFn: async () => {
       if (!selectedTableId) return null;
-      const response = await fetch(
-        `${API_URL}/api/personal-tasks/tables/${selectedTableId}`
+      const response = await apiRequest(
+        `/api/personal-tasks/tables/${selectedTableId}`
       );
       if (!response.ok) throw new Error("Failed to fetch table");
       return response.json();
@@ -89,9 +88,8 @@ const PersonalTaskPage: React.FC = () => {
   // Create table mutation
   const createTableMutation = useMutation({
     mutationFn: async (data: { startDate: string; week: number }) => {
-      const response = await fetch(`${API_URL}/api/personal-tasks/tables`, {
+      const response = await apiRequest("/api/personal-tasks/tables", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error("Failed to create table");
@@ -113,9 +111,8 @@ const PersonalTaskPage: React.FC = () => {
   // Create swimlane mutation
   const createSwimlaneMutation = useMutation({
     mutationFn: async (data: { tableId: string; content: string }) => {
-      const response = await fetch(`${API_URL}/api/personal-tasks/swimlanes`, {
+      const response = await apiRequest("/api/personal-tasks/swimlanes", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error("Failed to create swimlane");
@@ -136,8 +133,8 @@ const PersonalTaskPage: React.FC = () => {
   // Delete swimlane mutation
   const deleteSwimlaneMutation = useMutation({
     mutationFn: async (swimlaneId: string) => {
-      const response = await fetch(
-        `${API_URL}/api/personal-tasks/swimlanes/${swimlaneId}`,
+      const response = await apiRequest(
+        `/api/personal-tasks/swimlanes/${swimlaneId}`,
         { method: "DELETE" }
       );
       if (!response.ok) throw new Error("Failed to delete swimlane");
@@ -163,9 +160,8 @@ const PersonalTaskPage: React.FC = () => {
       priority?: string;
       taskDate: string;
     }) => {
-      const response = await fetch(`${API_URL}/api/personal-tasks/tasks`, {
+      const response = await apiRequest("/api/personal-tasks/tasks", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error("Failed to create task");
@@ -195,9 +191,8 @@ const PersonalTaskPage: React.FC = () => {
       status?: string;
       priority?: string;
     }) => {
-      const response = await fetch(`${API_URL}/api/personal-tasks/tasks/${taskId}`, {
+      const response = await apiRequest(`/api/personal-tasks/tasks/${taskId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error("Failed to update task");
@@ -219,7 +214,7 @@ const PersonalTaskPage: React.FC = () => {
   // Delete task mutation
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      const response = await fetch(`${API_URL}/api/personal-tasks/tasks/${taskId}`, {
+      const response = await apiRequest(`/api/personal-tasks/tasks/${taskId}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete task");
