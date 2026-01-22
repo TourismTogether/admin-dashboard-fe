@@ -14,26 +14,9 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
-import { format, parseISO, startOfWeek, eachDayOfInterval, isWithinInterval } from "date-fns";
+import { format, parseISO, startOfWeek, eachDayOfInterval } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface Task {
-  taskId: string;
-  swimlaneId: string;
-  content: string;
-  status: string;
-  priority: string;
-  detail?: string;
-  taskDate: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Swimlane {
-  swimlaneId: string;
-  content: string;
-  tasks?: Task[];
-}
+import type { Task, Swimlane } from "../shared/types";
 
 interface PerformanceStatsProps {
   swimlanes: Swimlane[];
@@ -254,7 +237,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
@@ -340,7 +323,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
                     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                   }}
                   labelStyle={{ color: "#1f2937", fontWeight: 600 }}
-                  formatter={(value: number) => [`${value}%`, "Completion Rate"]}
+                  formatter={(value: number | undefined) => [`${value ?? 0}%`, "Completion Rate"]}
                 />
                 <Legend />
                 <Line
