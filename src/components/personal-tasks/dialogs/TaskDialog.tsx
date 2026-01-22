@@ -11,17 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
-interface Task {
-  taskId: string;
-  swimlaneId: string;
-  content: string;
-  status: string;
-  priority: string;
-  detail?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Task } from "../shared/types";
 
 interface TaskDialogProps {
   task: Task | null;

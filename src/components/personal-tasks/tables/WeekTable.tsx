@@ -11,28 +11,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import type { Task, Swimlane as BaseSwimlane } from "../shared/types";
 
-interface Swimlane {
-  swimlaneId: string;
+interface Swimlane extends BaseSwimlane {
   tableId: string;
-  content: string;
   startTime?: string;
   duration?: number;
-  createdAt: string;
-  updatedAt: string;
-  tasks?: Task[];
-}
-
-interface Task {
-  taskId: string;
-  swimlaneId: string;
-  content: string;
-  status: string;
-  priority: string;
-  detail?: string;
-  taskDate: string; // Required, not optional
-  createdAt: string;
-  updatedAt: string;
 }
 
 interface WeekTableProps {
