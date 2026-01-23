@@ -11,6 +11,7 @@ import RootLayout from "./layouts/RootLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
 import PersonalTaskPage from "./pages/PersonalTaskPage";
 import GroupTaskPage from "./pages/GroupTaskPage";
+import PortfolioPage from "./pages/PortfolioPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -48,6 +49,14 @@ const router = createBrowserRouter([
             element: (
               <ProtectedRoute>
                 <GroupTaskPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "portfolio",
+            element: (
+              <ProtectedRoute>
+                <PortfolioPage />
               </ProtectedRoute>
             ),
           },
