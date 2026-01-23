@@ -53,3 +53,14 @@ export async function upsertPortfolio(portfolioData: PortfolioUpdateData): Promi
   const data = await response.json();
   return data.data;
 }
+
+// Delete portfolio
+export async function deletePortfolio(): Promise<void> {
+  const response = await apiRequest("/api/portfolio", {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to delete portfolio");
+  }
+}
