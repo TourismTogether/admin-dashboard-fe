@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getPortfolio, upsertPortfolio, deletePortfolio, type Portfolio, type PortfolioUpdateData } from "@/lib/api/portfolioApi";
+import { getPortfolio, upsertPortfolio, deletePortfolio, getContributions, type Portfolio, type PortfolioUpdateData } from "@/lib/api/portfolioApi";
 import { useSelector } from "react-redux";
 import { selectAuthUser } from "@/store/authSlice";
 import {
@@ -12,6 +12,7 @@ import {
   PortfolioForm,
   ProfileCard,
   ReadmeCard,
+  ContributionCalendar,
   generateAvatarUrl,
 } from "@/components/portfolio";
 
@@ -27,6 +28,13 @@ const PortfolioPage: React.FC = () => {
   const { data: portfolio, isLoading } = useQuery<Portfolio | null>({
     queryKey: ["portfolio"],
     queryFn: getPortfolio,
+  });
+
+  // Fetch contributions
+  const { data: contributions = {} } = useQuery<Record<string, number>>({
+    queryKey: ["portfolio", "contributions"],
+    queryFn: getContributions,
+    enabled: !!portfolio, // Only fetch if portfolio exists
   });
 
   // Update portfolio mutation
@@ -255,6 +263,13 @@ const PortfolioPage: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Contribution Calendar - Full Width */}
+      {!isFormMode && (
+        <div className="mt-6">
+          <ContributionCalendar contributions={contributions} />
+        </div>
+      )}
     </div>
   );
 };

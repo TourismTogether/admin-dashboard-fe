@@ -5,4 +5,5 @@ export { EmptyState } from "./EmptyState";
 export { ReadmeCard } from "./ReadmeCard";
 export { ProfileCard } from "./ProfileCard";
 export { PortfolioForm } from "./PortfolioForm";
+export { ContributionCalendar } from "./ContributionCalendar";
 export { generateAvatarUrl } from "./shared/utils";

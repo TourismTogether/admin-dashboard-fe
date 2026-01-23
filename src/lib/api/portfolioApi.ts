@@ -64,3 +64,13 @@ export async function deletePortfolio(): Promise<void> {
     throw new Error(error.error || "Failed to delete portfolio");
   }
 }
+
+// Get contribution calendar data
+export async function getContributions(): Promise<Record<string, number>> {
+  const response = await apiRequest("/api/portfolio/contributions");
+  if (!response.ok) {
+    throw new Error("Failed to fetch contributions");
+  }
+  const data = await response.json();
+  return data.data || {};
+}
