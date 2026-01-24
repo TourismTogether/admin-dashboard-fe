@@ -98,7 +98,8 @@ const SelfStudyPage: React.FC = () => {
       status?: string;
       priority?: string;
       taskDate: string;
-      detail?: string;
+      detail?: string | null;
+      checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
     }) => {
       const response = await apiRequest("/api/personal-tasks/tasks", {
         method: "POST",
@@ -129,7 +130,8 @@ const SelfStudyPage: React.FC = () => {
       content?: string;
       status?: string;
       priority?: string;
-      detail?: string;
+      detail?: string | null;
+      checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
       taskDate?: string;
     }) => {
       const response = await apiRequest(`/api/personal-tasks/tasks/${taskId}`, {
@@ -191,12 +193,16 @@ const SelfStudyPage: React.FC = () => {
     status: string,
     priority: string,
     taskDate: string,
-    detail?: string
+    detail?: string,
+    checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null
   ) => {
     if (!swimlaneId) {
       toast.error("Swimlane not available");
       return;
     }
+
+    const detailValue = detail && detail.trim() ? detail.trim() : null;
+    const checklistValue = checklist !== undefined ? checklist : null;
 
     if (editingTask) {
       updateTaskMutation.mutate({
@@ -204,17 +210,28 @@ const SelfStudyPage: React.FC = () => {
         content,
         status,
         priority,
-        detail,
+        detail: detailValue,
+        checklist: checklistValue,
       });
     } else {
-      createTaskMutation.mutate({
+      const createData: {
+        swimlaneId: string;
+        content: string;
+        status: string;
+        priority: string;
+        taskDate: string;
+        detail: string | null;
+        checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
+      } = {
         swimlaneId,
         content,
         status,
         priority,
         taskDate,
-        detail,
-      });
+        detail: detailValue,
+        checklist: checklistValue,
+      };
+      createTaskMutation.mutate(createData);
     }
   };
 

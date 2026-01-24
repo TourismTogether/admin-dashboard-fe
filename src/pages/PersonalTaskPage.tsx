@@ -302,7 +302,8 @@ const PersonalTaskPage: React.FC = () => {
       status?: string;
       priority?: string;
       taskDate: string;
-      detail?: string;
+      detail?: string | null;
+      checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
     }) => {
       const response = await apiRequest("/api/personal-tasks/tasks", {
         method: "POST",
@@ -334,7 +335,8 @@ const PersonalTaskPage: React.FC = () => {
       content?: string;
       status?: string;
       priority?: string;
-      detail?: string;
+      detail?: string | null;
+      checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
       taskDate?: string;
       swimlaneId?: string;
     }) => {
@@ -476,27 +478,50 @@ const PersonalTaskPage: React.FC = () => {
     status: string,
     priority: string,
     taskDate: string,
-    detail?: string
+    detail?: string,
+    checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null
   ) => {
     if (!editingTask) return;
 
+    const detailValue = detail && detail.trim() ? detail.trim() : null;
+    const checklistValue = checklist !== undefined ? checklist : null;
+
     if (editingTask.task) {
-      updateTaskMutation.mutate({
+      const updateData: {
+        taskId: string;
+        content: string;
+        status: string;
+        priority: string;
+        detail: string | null;
+        checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
+      } = {
         taskId: editingTask.task.taskId,
         content,
         status,
         priority,
-        detail,
-      });
+        detail: detailValue,
+        checklist: checklistValue,
+      };
+      updateTaskMutation.mutate(updateData);
     } else {
-      createTaskMutation.mutate({
+      const createData: {
+        swimlaneId: string;
+        content: string;
+        status: string;
+        priority: string;
+        taskDate: string;
+        detail: string | null;
+        checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
+      } = {
         swimlaneId: editingTask.swimlaneId,
         content,
         status,
         priority,
         taskDate,
-        detail,
-      });
+        detail: detailValue,
+        checklist: checklistValue,
+      };
+      createTaskMutation.mutate(createData);
     }
   };
 
@@ -543,15 +568,27 @@ const PersonalTaskPage: React.FC = () => {
     content: string,
     status: string,
     priority: string,
-    detail?: string
+    detail?: string,
+    checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null
   ) => {
-    updateTaskMutation.mutate({
+    const detailValue = detail && detail.trim() ? detail.trim() : null;
+    const checklistValue = checklist !== undefined ? checklist : null;
+    const updateData: {
+      taskId: string;
+      content: string;
+      status: string;
+      priority: string;
+      detail: string | null;
+      checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
+    } = {
       taskId,
       content,
       status,
       priority,
-      detail,
-    });
+      detail: detailValue,
+      checklist: checklistValue,
+    };
+    updateTaskMutation.mutate(updateData);
   };
 
   const handleMoveTask = (taskId: string, newTaskDate: string, newSwimlaneId?: string) => {

@@ -75,6 +75,13 @@ export async function getContributions(): Promise<Record<string, number>> {
   return data.data || {};
 }
 
+// ChecklistItem interface
+export interface ChecklistItem {
+  id: string;
+  description: string;
+  isComplete: boolean;
+}
+
 // Task interface for history
 export interface Task {
   taskId: string;
@@ -83,6 +90,7 @@ export interface Task {
   status: string;
   priority: string;
   detail?: string;
+  checklist?: ChecklistItem[];
   taskDate: string;
   createdAt: string;
   updatedAt: string;
