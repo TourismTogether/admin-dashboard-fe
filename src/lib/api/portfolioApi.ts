@@ -74,3 +74,26 @@ export async function getContributions(): Promise<Record<string, number>> {
   const data = await response.json();
   return data.data || {};
 }
+
+// Task interface for history
+export interface Task {
+  taskId: string;
+  swimlaneId: string;
+  content: string;
+  status: string;
+  priority: string;
+  detail?: string;
+  taskDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Get recent tasks (last 10)
+export async function getRecentTasks(): Promise<Task[]> {
+  const response = await apiRequest("/api/personal-tasks/tasks/recent");
+  if (!response.ok) {
+    throw new Error("Failed to fetch recent tasks");
+  }
+  const data = await response.json();
+  return data.data || [];
+}
