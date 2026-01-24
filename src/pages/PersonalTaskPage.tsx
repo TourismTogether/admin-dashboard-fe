@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { format, addDays, parseISO } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Filter, RefreshCw } from "lucide-react";
+import { Plus, Search, Filter, RefreshCw, BookOpen } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -57,6 +58,7 @@ interface TableWithSwimlanes extends TableWeek {
 }
 
 const PersonalTaskPage: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [isCreateTableOpen, setIsCreateTableOpen] = useState(false);
   const [isEditTableOpen, setIsEditTableOpen] = useState(false);
@@ -598,6 +600,13 @@ const PersonalTaskPage: React.FC = () => {
             <RefreshCw
               className={`h-4 w-4 ${isLoadingTables ? "animate-spin" : ""}`}
             />
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/self-study")}
+          >
+            <BookOpen className="h-4 w-4 mr-2" />
+            Self Study
           </Button>
           <Button onClick={() => setIsCreateTableOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
