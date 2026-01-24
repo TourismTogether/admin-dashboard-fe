@@ -12,13 +12,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { Task } from "../shared/types";
+import { Plus, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { Task, ChecklistItem } from "../shared/types";
 
 interface TaskDetailDialogProps {
   task: Task | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (taskId: string, content: string, status: string, priority: string, detail?: string) => void;
+  onSave: (taskId: string, content: string, status: string, priority: string, detail?: string, checklist?: ChecklistItem[] | null) => void;
   isLoading?: boolean;
 }
 
@@ -33,25 +35,70 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
   const [status, setStatus] = useState("todo");
   const [priority, setPriority] = useState("medium");
   const [detail, setDetail] = useState("");
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+
+  // Generate unique ID for checklist items
+  const generateChecklistId = () => {
+    return `checklist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  };
+
+  // Ensure all checklist items have IDs (for backward compatibility)
+  const ensureChecklistIds = (items: ChecklistItem[]): ChecklistItem[] => {
+    return items.map((item) => ({
+      ...item,
+      id: item.id || generateChecklistId(),
+    }));
+  };
 
   useEffect(() => {
+    if (!open) {
+      // Reset state when dialog closes
+      setContent("");
+      setStatus("todo");
+      setPriority("medium");
+      setDetail("");
+      setChecklist([]);
+      return;
+    }
+
+    // Load task data when dialog opens
     if (task) {
       setContent(task.content);
       setStatus(task.status);
       setPriority(task.priority);
       setDetail(task.detail || "");
+      const loadedChecklist = task.checklist ? [...task.checklist] : [];
+      setChecklist(ensureChecklistIds(loadedChecklist));
     } else {
       setContent("");
       setStatus("todo");
       setPriority("medium");
       setDetail("");
+      setChecklist([]);
     }
   }, [task, open]);
+
+  const handleAddChecklistItem = () => {
+    setChecklist((prev) => [...prev, { id: generateChecklistId(), description: "", isComplete: false }]);
+  };
+
+  const handleRemoveChecklistItem = (id: string) => {
+    setChecklist((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleChecklistItemChange = (id: string, field: keyof ChecklistItem, value: string | boolean) => {
+    setChecklist((prev) => {
+      return prev.map((item) => (item.id === id ? { ...item, [field]: value } : item));
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim() || !task) return;
-    onSave(task.taskId, content, status, priority, detail.trim() || undefined);
+    const validChecklist = checklist.filter(item => item.description.trim());
+    const detailValue = detail.trim() ? detail.trim() : null;
+    const checklistValue = validChecklist.length > 0 ? validChecklist : null;
+    onSave(task.taskId, content, status, priority, detailValue || undefined, checklistValue);
   };
 
   if (!task) return null;
@@ -139,6 +186,56 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
               rows={6}
               className="resize-none"
             />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Checklist (Optional)</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddChecklistItem}
+                className="h-8"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Item
+              </Button>
+            </div>
+            <div className="space-y-2 border rounded-md p-3">
+              {checklist.length > 0 ? (
+                checklist.map((item) => (
+                  <div key={item.id} className="flex items-center gap-2">
+                    <Checkbox
+                      checked={item.isComplete}
+                      onCheckedChange={(checked: boolean) =>
+                        handleChecklistItemChange(item.id, "isComplete", checked)
+                      }
+                    />
+                    <Input
+                      value={item.description}
+                      onChange={(e) =>
+                        handleChecklistItemChange(item.id, "description", e.target.value)
+                      }
+                      placeholder="Checklist item..."
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveChecklistItem(item.id)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-2">
+                  No checklist items. Click "Add Item" to create one.
+                </p>
+              )}
+            </div>
           </div>
 
           <DialogFooter>
