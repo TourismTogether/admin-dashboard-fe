@@ -12,6 +12,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import PersonalTaskPage from "./pages/PersonalTaskPage";
 import GroupTaskPage from "./pages/GroupTaskPage";
 import PortfolioPage from "./pages/PortfolioPage";
+import SelfStudyPage from "./pages/SelfStudyPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -57,6 +58,14 @@ const router = createBrowserRouter([
             element: (
               <ProtectedRoute>
                 <PortfolioPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "self-study",
+            element: (
+              <ProtectedRoute>
+                <SelfStudyPage />
               </ProtectedRoute>
             ),
           },
