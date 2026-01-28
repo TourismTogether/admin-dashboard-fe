@@ -3,10 +3,6 @@ import { format, parseISO, addDays, startOfWeek, endOfWeek } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trash2, Plus } from "lucide-react";
-import { CreateGroupTaskDialog } from "./CreateGroupTaskDialog";
-import { CreateGroupSwimlaneDialog } from "./CreateGroupSwimlaneDialog";
-import { DeleteGroupSwimlaneDialog } from "./DeleteGroupSwimlaneDialog";
 
 interface Task {
   taskId: string;
@@ -87,10 +83,6 @@ export const GroupTaskWeekView: React.FC<GroupTaskWeekViewProps> = ({
   onAssignSwimlane: _onAssignSwimlane,
   teamMembers: _teamMembers,
 }) => {
-  const [selectedSwimlane, setSelectedSwimlane] = useState<Swimlane | null>(null);
-  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
-  const [isDeleteSwimlaneOpen, setIsDeleteSwimlaneOpen] = useState(false);
-  const [swimlaneToDelete, setSwimlaneToDelete] = useState<{ swimlaneId: string; content: string } | null>(null);
 
   const weekStart = startOfWeek(parseISO(startDate));
   const weekEnd = endOfWeek(weekStart);
@@ -116,20 +108,6 @@ export const GroupTaskWeekView: React.FC<GroupTaskWeekViewProps> = ({
     return grouped;
   };
 
-  const handleCreateTask = async (data: any) => {
-    if (selectedSwimlane) {
-      await onCreateTask(selectedSwimlane.swimlaneId, data);
-      onRefresh();
-    }
-  };
-
-  const handleDeleteSwimlane = async () => {
-    if (swimlaneToDelete) {
-      await onDeleteSwimlane(swimlaneToDelete.swimlaneId);
-      onRefresh();
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Controls */}
@@ -142,13 +120,6 @@ export const GroupTaskWeekView: React.FC<GroupTaskWeekViewProps> = ({
             {format(weekStart, "EEEE, MMMM d, yyyy")} to {format(weekEnd, "EEEE, MMMM d, yyyy")}
           </p>
         </div>
-        {isLeader && (
-          <CreateGroupSwimlaneDialog
-            groupTaskId={groupTaskId}
-            onSuccess={onRefresh}
-            onSubmit={onCreateSwimlane}
-          />
-        )}
       </div>
 
       {/* Week Table */}
@@ -168,7 +139,6 @@ export const GroupTaskWeekView: React.FC<GroupTaskWeekViewProps> = ({
                   </div>
                 </th>
               ))}
-              {isLeader && <th className="px-4 py-3 text-center w-12">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -199,10 +169,7 @@ export const GroupTaskWeekView: React.FC<GroupTaskWeekViewProps> = ({
                         {tasksForDay.map((task) => (
                           <Card
                             key={task.taskId}
-                            className="p-2 cursor-pointer hover:shadow-md transition-shadow"
-                            onClick={() => {
-                              setSelectedSwimlane(swimlane);
-                            }}
+                            className="p-2"
                           >
                             <div className="text-sm font-medium line-clamp-2">
                               {task.content}
@@ -217,69 +184,17 @@ export const GroupTaskWeekView: React.FC<GroupTaskWeekViewProps> = ({
                             </div>
                           </Card>
                         ))}
-
-                        {/* Add task button */}
-                        {isLeader && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => {
-                              setSelectedSwimlane(swimlane);
-                              setIsCreateTaskOpen(true);
-                            }}
-                          >
-                            <Plus className="w-3 h-3 mr-1" />
-                            Add Task
-                          </Button>
-                        )}
                       </div>
                     </td>
                   );
                 })}
 
-                {/* Actions */}
-                {isLeader && (
-                  <td className="px-4 py-3 text-center">
-                    <div className="flex justify-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSwimlaneToDelete({
-                            swimlaneId: swimlane.swimlaneId,
-                            content: swimlane.content,
-                          });
-                          setIsDeleteSwimlaneOpen(true);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </Button>
-                    </div>
-                  </td>
-                )}
+
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      {/* Create Task Dialog */}
-      <CreateGroupTaskDialog
-        swimlaneId={selectedSwimlane?.swimlaneId || ""}
-        onSuccess={onRefresh}
-        isOpen={isCreateTaskOpen}
-        onOpenChange={setIsCreateTaskOpen}
-        onSubmit={handleCreateTask}
-      />
-
-      {/* Delete Swimlane Dialog */}
-      <DeleteGroupSwimlaneDialog
-        swimlane={swimlaneToDelete}
-        isOpen={isDeleteSwimlaneOpen}
-        onOpenChange={setIsDeleteSwimlaneOpen}
-        onDelete={handleDeleteSwimlane}
-      />
     </div>
   );
 };
