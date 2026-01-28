@@ -93,6 +93,7 @@ const GroupTaskPage: React.FC = () => {
   const [isViewTaskOpen, setIsViewTaskOpen] = useState(false);
   const [isGroupsListVisible, setIsGroupsListVisible] = useState(true);
   const [activeTab, setActiveTab] = useState<"schedule" | "tasks" | "timeline">("schedule");
+  const [isWeeklyScheduleExpanded, setIsWeeklyScheduleExpanded] = useState(false);
 
   const getTodayDateString = () => {
     const today = new Date();
@@ -189,7 +190,10 @@ const GroupTaskPage: React.FC = () => {
         method: "POST",
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to create task");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create task");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -214,7 +218,10 @@ const GroupTaskPage: React.FC = () => {
         method: "POST",
         body: JSON.stringify({ email: data.email, role: data.role }),
       });
-      if (!response.ok) throw new Error("Failed to add member");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to add member");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -271,7 +278,10 @@ const GroupTaskPage: React.FC = () => {
           assigneeIds: data.assigneeIds,
         }),
       });
-      if (!response.ok) throw new Error("Failed to update task");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update task");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -963,7 +973,9 @@ const GroupTaskPage: React.FC = () => {
                           <p className="text-sm text-gray-500">Tasks appear in every week they span.</p>
                         </div>
                         <div className="divide-y">
-                          {weeklyTaskBuckets.map((week) => (
+                          {weeklyTaskBuckets
+                            .slice(0, isWeeklyScheduleExpanded ? undefined : 3)
+                            .map((week) => (
                             <div key={week.weekStart.toISOString()} className="p-4 space-y-3">
                               <div className="flex items-center justify-between">
                                 <div>
@@ -1023,6 +1035,26 @@ const GroupTaskPage: React.FC = () => {
                             </div>
                           ))}
                         </div>
+                        {weeklyTaskBuckets.length > 3 && !isWeeklyScheduleExpanded && (
+                          <div className="flex justify-center pt-4">
+                            <button
+                              onClick={() => setIsWeeklyScheduleExpanded(true)}
+                              className="p-2 hover:bg-gray-100 rounded-full transition"
+                            >
+                              <ChevronDown className="h-5 w-5 text-gray-600" />
+                            </button>
+                          </div>
+                        )}
+                        {isWeeklyScheduleExpanded && weeklyTaskBuckets.length > 3 && (
+                          <div className="flex justify-center pt-4">
+                            <button
+                              onClick={() => setIsWeeklyScheduleExpanded(false)}
+                              className="p-2 hover:bg-gray-100 rounded-full transition"
+                            >
+                              <ChevronDown className="h-5 w-5 text-gray-600 transform rotate-180" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="text-center py-8 text-gray-500">No tasks to show in schedule</div>
@@ -1370,53 +1402,55 @@ const GroupTaskPage: React.FC = () => {
                               </DialogContent>
                             </Dialog>
 
-                            <Dialog
-                              open={deleteTaskId === task.groupTaskId && isDeleteTaskDialogOpen}
-                              onOpenChange={(open) => {
-                                if (open) {
-                                  setDeleteTaskId(task.groupTaskId);
-                                  setIsDeleteTaskDialogOpen(true);
-                                } else {
-                                  setIsDeleteTaskDialogOpen(false);
-                                  setDeleteTaskId(null);
-                                }
-                              }}
-                            >
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-red-600">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Delete Task</DialogTitle>
-                                  <DialogDescription>
-                                    Are you sure you want to delete this task? This action cannot be undone.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="flex gap-3 justify-end">
-                                  <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                      setIsDeleteTaskDialogOpen(false);
-                                      setDeleteTaskId(null);
-                                    }}
-                                  >
-                                    Cancel
+                            {["owner", "admin", "leader"].includes(selectedGroup?.role || "") && (
+                              <Dialog
+                                open={deleteTaskId === task.groupTaskId && isDeleteTaskDialogOpen}
+                                onOpenChange={(open) => {
+                                  if (open) {
+                                    setDeleteTaskId(task.groupTaskId);
+                                    setIsDeleteTaskDialogOpen(true);
+                                  } else {
+                                    setIsDeleteTaskDialogOpen(false);
+                                    setDeleteTaskId(null);
+                                  }
+                                }}
+                              >
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="text-red-600">
+                                    <Trash2 className="h-4 w-4" />
                                   </Button>
-                                  <Button
-                                    variant="destructive"
-                                    disabled={deleteTask.isPending}
-                                    onClick={() => {
-                                      if (!deleteTaskId) return;
-                                      deleteTask.mutate(deleteTaskId);
-                                    }}
-                                  >
-                                    {deleteTask.isPending ? "Deleting..." : "Delete"}
-                                  </Button>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Delete Task</DialogTitle>
+                                    <DialogDescription>
+                                      Are you sure you want to delete this task? This action cannot be undone.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="flex gap-3 justify-end">
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => {
+                                        setIsDeleteTaskDialogOpen(false);
+                                        setDeleteTaskId(null);
+                                      }}
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      disabled={deleteTask.isPending}
+                                      onClick={() => {
+                                        if (!deleteTaskId) return;
+                                        deleteTask.mutate(deleteTaskId);
+                                      }}
+                                    >
+                                      {deleteTask.isPending ? "Deleting..." : "Delete"}
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            )}
                           </div>
                         </div>
                       ))}
