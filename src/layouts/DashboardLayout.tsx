@@ -19,6 +19,8 @@ const DashboardLayout: React.FC = () => {
   const navItems = [
     { path: "/personal-tasks", label: "Personal Tasks" },
     { path: "/group-tasks", label: "Group Tasks" },
+    { path: "/portfolio", label: "Portfolio" },
+    { path: "/settings", label: "Settings" },
   ];
 
   return (

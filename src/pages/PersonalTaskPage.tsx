@@ -1,23 +1,24 @@
 import React, { useState, useMemo } from "react";
 import { format, addDays, parseISO } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Filter, RefreshCw } from "lucide-react";
+import { Plus, Search, Filter, RefreshCw, BookOpen, Mail } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api";
-import { CreateTableDialog } from "@/components/personal-tasks/CreateTableDialog";
-import { EditTableDialog } from "@/components/personal-tasks/EditTableDialog";
-import { CreateSwimlaneDialog } from "@/components/personal-tasks/CreateSwimlaneDialog";
-import { TaskDialog } from "@/components/personal-tasks/TaskDialog";
-import { TablesList } from "@/components/personal-tasks/TablesList";
-import { WeekTable } from "@/components/personal-tasks/WeekTable";
-import { DeleteTableDialog } from "@/components/personal-tasks/DeleteTableDialog";
-import { DeleteSwimlaneDialog } from "@/components/personal-tasks/DeleteSwimlaneDialog";
-import { DeleteTaskDialog } from "@/components/personal-tasks/DeleteTaskDialog";
-import { TaskSummaryTables } from "@/components/personal-tasks/TaskSummaryTables";
-import { TaskDetailDialog } from "@/components/personal-tasks/TaskDetailDialog";
-import { PerformanceStats } from "@/components/personal-tasks/PerformanceStats";
+import { CreateTableDialog } from "@/components/personal-tasks/dialogs/CreateTableDialog";
+import { EditTableDialog } from "@/components/personal-tasks/dialogs/EditTableDialog";
+import { CreateSwimlaneDialog } from "@/components/personal-tasks/dialogs/CreateSwimlaneDialog";
+import { TaskDialog } from "@/components/personal-tasks/dialogs/TaskDialog";
+import { TablesList } from "@/components/personal-tasks/tables/TablesList";
+import { WeekTable } from "@/components/personal-tasks/tables/WeekTable";
+import { DeleteTableDialog } from "@/components/personal-tasks/dialogs/DeleteTableDialog";
+import { DeleteSwimlaneDialog } from "@/components/personal-tasks/dialogs/DeleteSwimlaneDialog";
+import { DeleteTaskDialog } from "@/components/personal-tasks/dialogs/DeleteTaskDialog";
+import { TaskSummaryTables } from "@/components/personal-tasks/task-summary/TaskSummaryTables";
+import { TaskDetailDialog } from "@/components/personal-tasks/dialogs/TaskDetailDialog";
+import { PerformanceStats } from "@/components/personal-tasks/performance-stats/PerformanceStats";
 
 interface TableWeek {
   tableId: string;
@@ -57,6 +58,7 @@ interface TableWithSwimlanes extends TableWeek {
 }
 
 const PersonalTaskPage: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [isCreateTableOpen, setIsCreateTableOpen] = useState(false);
   const [isEditTableOpen, setIsEditTableOpen] = useState(false);
@@ -94,6 +96,21 @@ const PersonalTaskPage: React.FC = () => {
   const [endDateFilter, setEndDateFilter] = useState("");
 
   const queryClient = useQueryClient();
+
+  // Fetch email settings
+  const { data: emailSettings } = useQuery<{
+    data: {
+      sendPersonalTasksEmail: boolean;
+      email: string | null;
+    };
+  }>({
+    queryKey: ["settings", "personal-tasks-email"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/settings/personal-tasks-email");
+      if (!response.ok) throw new Error("Failed to fetch email settings");
+      return response.json();
+    },
+  });
 
   // Fetch all tables
   const { data: tablesData, isLoading: isLoadingTables, refetch: refetchTables } = useQuery<{ data: TableWeek[] }>({
@@ -160,6 +177,35 @@ const PersonalTaskPage: React.FC = () => {
     setWeekFilter(null);
     setStartDateFilter("");
     setEndDateFilter("");
+  };
+
+  // Send weekly email mutation
+  const sendEmailMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("/api/personal-tasks/send-weekly-email", {
+        method: "POST",
+        body: JSON.stringify({}), // Empty body to satisfy Fastify's JSON content-type requirement
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to send email");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast.success("Email sent successfully!");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to send email");
+    },
+  });
+
+  const handleSendEmail = () => {
+    if (!emailSettings?.data.sendPersonalTasksEmail) {
+      toast.error("Email notifications are not enabled. Please enable them in Settings first.");
+      return;
+    }
+    sendEmailMutation.mutate();
   };
 
   // Fetch selected table with swimlanes and tasks
@@ -300,7 +346,8 @@ const PersonalTaskPage: React.FC = () => {
       status?: string;
       priority?: string;
       taskDate: string;
-      detail?: string;
+      detail?: string | null;
+      checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
     }) => {
       const response = await apiRequest("/api/personal-tasks/tasks", {
         method: "POST",
@@ -332,7 +379,8 @@ const PersonalTaskPage: React.FC = () => {
       content?: string;
       status?: string;
       priority?: string;
-      detail?: string;
+      detail?: string | null;
+      checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
       taskDate?: string;
       swimlaneId?: string;
     }) => {
@@ -474,27 +522,50 @@ const PersonalTaskPage: React.FC = () => {
     status: string,
     priority: string,
     taskDate: string,
-    detail?: string
+    detail?: string,
+    checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null
   ) => {
     if (!editingTask) return;
 
+    const detailValue = detail && detail.trim() ? detail.trim() : null;
+    const checklistValue = checklist !== undefined ? checklist : null;
+
     if (editingTask.task) {
-      updateTaskMutation.mutate({
+      const updateData: {
+        taskId: string;
+        content: string;
+        status: string;
+        priority: string;
+        detail: string | null;
+        checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
+      } = {
         taskId: editingTask.task.taskId,
         content,
         status,
         priority,
-        detail,
-      });
+        detail: detailValue,
+        checklist: checklistValue,
+      };
+      updateTaskMutation.mutate(updateData);
     } else {
-      createTaskMutation.mutate({
+      const createData: {
+        swimlaneId: string;
+        content: string;
+        status: string;
+        priority: string;
+        taskDate: string;
+        detail: string | null;
+        checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
+      } = {
         swimlaneId: editingTask.swimlaneId,
         content,
         status,
         priority,
         taskDate,
-        detail,
-      });
+        detail: detailValue,
+        checklist: checklistValue,
+      };
+      createTaskMutation.mutate(createData);
     }
   };
 
@@ -541,15 +612,27 @@ const PersonalTaskPage: React.FC = () => {
     content: string,
     status: string,
     priority: string,
-    detail?: string
+    detail?: string,
+    checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null
   ) => {
-    updateTaskMutation.mutate({
+    const detailValue = detail && detail.trim() ? detail.trim() : null;
+    const checklistValue = checklist !== undefined ? checklist : null;
+    const updateData: {
+      taskId: string;
+      content: string;
+      status: string;
+      priority: string;
+      detail: string | null;
+      checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
+    } = {
       taskId,
       content,
       status,
       priority,
-      detail,
-    });
+      detail: detailValue,
+      checklist: checklistValue,
+    };
+    updateTaskMutation.mutate(updateData);
   };
 
   const handleMoveTask = (taskId: string, newTaskDate: string, newSwimlaneId?: string) => {
@@ -598,6 +681,22 @@ const PersonalTaskPage: React.FC = () => {
             <RefreshCw
               className={`h-4 w-4 ${isLoadingTables ? "animate-spin" : ""}`}
             />
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleSendEmail}
+            disabled={sendEmailMutation.isPending || !emailSettings?.data.sendPersonalTasksEmail}
+            title={!emailSettings?.data.sendPersonalTasksEmail ? "Enable email notifications in Settings first" : "Send weekly progress report email"}
+          >
+            <Mail className="h-4 w-4 mr-2" />
+            {sendEmailMutation.isPending ? "Sending..." : "Send Email"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/self-study")}
+          >
+            <BookOpen className="h-4 w-4 mr-2" />
+            Self Study
           </Button>
           <Button onClick={() => setIsCreateTableOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
