@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { format, parseISO, addDays, startOfWeek, endOfWeek } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 interface Task {
@@ -27,18 +26,8 @@ interface Swimlane {
 }
 
 interface GroupTaskWeekViewProps {
-  groupTaskId: string;
   startDate: string;
   swimlanes: Swimlane[];
-  isLeader: boolean;
-  onRefresh: () => void;
-  onCreateTask: (swimlaneId: string, data: any) => Promise<void>;
-  onUpdateTask: (taskId: string, data: any) => Promise<void>;
-  onDeleteTask: (taskId: string) => Promise<void>;
-  onCreateSwimlane: (data: any) => Promise<void>;
-  onDeleteSwimlane: (swimlaneId: string) => Promise<void>;
-  onAssignSwimlane: (swimlaneId: string, userId: string) => Promise<void>;
-  teamMembers?: Array<{ userId: string; email: string }>;
 }
 
 const getPriorityColor = (priority: string) => {
@@ -70,18 +59,8 @@ const getStatusColor = (status: string) => {
 };
 
 export const GroupTaskWeekView: React.FC<GroupTaskWeekViewProps> = ({
-  groupTaskId,
   startDate,
   swimlanes,
-  isLeader,
-  onRefresh,
-  onCreateTask,
-  onUpdateTask: _onUpdateTask,
-  onDeleteTask: _onDeleteTask,
-  onCreateSwimlane,
-  onDeleteSwimlane,
-  onAssignSwimlane: _onAssignSwimlane,
-  teamMembers: _teamMembers,
 }) => {
 
   const weekStart = startOfWeek(parseISO(startDate));
