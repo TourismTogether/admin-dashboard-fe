@@ -55,6 +55,14 @@ const router = createBrowserRouter([
             ),
           },
           {
+            path: "group-tasks/:groupId",
+            element: (
+              <ProtectedRoute>
+                <GroupTaskPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
             path: "portfolio",
             element: (
               <ProtectedRoute>
