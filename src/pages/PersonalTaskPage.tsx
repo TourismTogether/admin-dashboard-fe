@@ -10,9 +10,16 @@ import { apiRequest } from "@/lib/api";
 import { CreateTableDialog } from "@/components/personal-tasks/dialogs/CreateTableDialog";
 import { EditTableDialog } from "@/components/personal-tasks/dialogs/EditTableDialog";
 import { CreateSwimlaneDialog } from "@/components/personal-tasks/dialogs/CreateSwimlaneDialog";
+import {
+  EditSwimlaneDialog,
+  type SwimlaneToEdit,
+} from "@/components/personal-tasks/dialogs/EditSwimlaneDialog";
 import { TaskDialog } from "@/components/personal-tasks/dialogs/TaskDialog";
 import { TablesList } from "@/components/personal-tasks/tables/TablesList";
-import { WeekTable } from "@/components/personal-tasks/tables/WeekTable";
+import {
+  WeekTable,
+  type SwimlaneEditPayload,
+} from "@/components/personal-tasks/tables/WeekTable";
 import { DeleteTableDialog } from "@/components/personal-tasks/dialogs/DeleteTableDialog";
 import { DeleteSwimlaneDialog } from "@/components/personal-tasks/dialogs/DeleteSwimlaneDialog";
 import { DeleteTaskDialog } from "@/components/personal-tasks/dialogs/DeleteTaskDialog";
@@ -64,6 +71,10 @@ const PersonalTaskPage: React.FC = () => {
   const [isEditTableOpen, setIsEditTableOpen] = useState(false);
   const [editingTable, setEditingTable] = useState<TableWeek | null>(null);
   const [isCreateSwimlaneOpen, setIsCreateSwimlaneOpen] = useState(false);
+  const [isEditSwimlaneOpen, setIsEditSwimlaneOpen] = useState(false);
+  const [swimlaneToEdit, setSwimlaneToEdit] = useState<SwimlaneToEdit | null>(
+    null
+  );
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [isDeleteTableOpen, setIsDeleteTableOpen] = useState(false);
   const [isDeleteSwimlaneOpen, setIsDeleteSwimlaneOpen] = useState(false);
@@ -113,7 +124,11 @@ const PersonalTaskPage: React.FC = () => {
   });
 
   // Fetch all tables
-  const { data: tablesData, isLoading: isLoadingTables, refetch: refetchTables } = useQuery<{ data: TableWeek[] }>({
+  const {
+    data: tablesData,
+    isLoading: isLoadingTables,
+    refetch: refetchTables,
+  } = useQuery<{ data: TableWeek[] }>({
     queryKey: ["personal-tasks", "tables"],
     queryFn: async () => {
       const response = await apiRequest("/api/personal-tasks/tables");
@@ -125,7 +140,7 @@ const PersonalTaskPage: React.FC = () => {
   // Filter and search tables
   const filteredTables = useMemo(() => {
     if (!tablesData?.data) return [];
-    
+
     let filtered = tablesData.data;
 
     // Search filter (by description or week)
@@ -135,7 +150,9 @@ const PersonalTaskPage: React.FC = () => {
         (table) =>
           table.description?.toLowerCase().includes(query) ||
           table.week.toString().includes(query) ||
-          format(parseISO(table.startDate), "MMM d, yyyy").toLowerCase().includes(query)
+          format(parseISO(table.startDate), "MMM d, yyyy")
+            .toLowerCase()
+            .includes(query)
       );
     }
 
@@ -146,19 +163,21 @@ const PersonalTaskPage: React.FC = () => {
 
     // Date range filter
     if (startDateFilter) {
-      filtered = filtered.filter(
-        (table) => table.startDate >= startDateFilter
-      );
+      filtered = filtered.filter((table) => table.startDate >= startDateFilter);
     }
 
     if (endDateFilter) {
-      filtered = filtered.filter(
-        (table) => table.startDate <= endDateFilter
-      );
+      filtered = filtered.filter((table) => table.startDate <= endDateFilter);
     }
 
     return filtered;
-  }, [tablesData?.data, searchQuery, weekFilter, startDateFilter, endDateFilter]);
+  }, [
+    tablesData?.data,
+    searchQuery,
+    weekFilter,
+    startDateFilter,
+    endDateFilter,
+  ]);
 
   // Get unique weeks for filter
   const availableWeeks = useMemo(() => {
@@ -182,10 +201,13 @@ const PersonalTaskPage: React.FC = () => {
   // Send weekly email mutation
   const sendEmailMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("/api/personal-tasks/send-weekly-email", {
-        method: "POST",
-        body: JSON.stringify({}), // Empty body to satisfy Fastify's JSON content-type requirement
-      });
+      const response = await apiRequest(
+        "/api/personal-tasks/send-weekly-email",
+        {
+          method: "POST",
+          body: JSON.stringify({}), // Empty body to satisfy Fastify's JSON content-type requirement
+        }
+      );
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "Failed to send email");
@@ -202,7 +224,9 @@ const PersonalTaskPage: React.FC = () => {
 
   const handleSendEmail = () => {
     if (!emailSettings?.data.sendPersonalTasksEmail) {
-      toast.error("Email notifications are not enabled. Please enable them in Settings first.");
+      toast.error(
+        "Email notifications are not enabled. Please enable them in Settings first."
+      );
       return;
     }
     sendEmailMutation.mutate();
@@ -224,7 +248,11 @@ const PersonalTaskPage: React.FC = () => {
 
   // Create table mutation
   const createTableMutation = useMutation({
-    mutationFn: async (data: { startDate: string; week: number; description?: string }) => {
+    mutationFn: async (data: {
+      startDate: string;
+      week: number;
+      description?: string;
+    }) => {
       const response = await apiRequest("/api/personal-tasks/tables", {
         method: "POST",
         body: JSON.stringify(data),
@@ -247,17 +275,30 @@ const PersonalTaskPage: React.FC = () => {
 
   // Update table mutation
   const updateTableMutation = useMutation({
-    mutationFn: async ({ tableId, ...data }: { tableId: string; startDate: string; week: number; description?: string }) => {
-      const response = await apiRequest(`/api/personal-tasks/tables/${tableId}`, {
-        method: "PUT",
-        body: JSON.stringify(data),
-      });
+    mutationFn: async ({
+      tableId,
+      ...data
+    }: {
+      tableId: string;
+      startDate: string;
+      week: number;
+      description?: string;
+    }) => {
+      const response = await apiRequest(
+        `/api/personal-tasks/tables/${tableId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(data),
+        }
+      );
       if (!response.ok) throw new Error("Failed to update table");
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["personal-tasks", "tables"] });
-      queryClient.invalidateQueries({ queryKey: ["personal-tasks", "table", selectedTableId] });
+      queryClient.invalidateQueries({
+        queryKey: ["personal-tasks", "table", selectedTableId],
+      });
       setIsEditTableOpen(false);
       setEditingTable(null);
       toast.success("Table updated successfully");
@@ -269,10 +310,10 @@ const PersonalTaskPage: React.FC = () => {
 
   // Create swimlane mutation
   const createSwimlaneMutation = useMutation({
-    mutationFn: async (data: { 
-      tableId: string; 
-      content: string; 
-      startTime?: string; 
+    mutationFn: async (data: {
+      tableId: string;
+      content: string;
+      startTime?: string;
       duration?: number;
     }) => {
       const response = await apiRequest("/api/personal-tasks/swimlanes", {
@@ -297,9 +338,12 @@ const PersonalTaskPage: React.FC = () => {
   // Delete table mutation
   const deleteTableMutation = useMutation({
     mutationFn: async (tableId: string) => {
-      const response = await apiRequest(`/api/personal-tasks/tables/${tableId}`, {
-        method: "DELETE",
-      });
+      const response = await apiRequest(
+        `/api/personal-tasks/tables/${tableId}`,
+        {
+          method: "DELETE",
+        }
+      );
       if (!response.ok) throw new Error("Failed to delete table");
       return response.json();
     },
@@ -312,6 +356,42 @@ const PersonalTaskPage: React.FC = () => {
     },
     onError: (error: Error) => {
       toast.error(`Failed to delete table: ${error.message}`);
+    },
+  });
+
+  // Update swimlane mutation
+  const updateSwimlaneMutation = useMutation({
+    mutationFn: async ({
+      swimlaneId,
+      content,
+      startTime,
+      duration,
+    }: {
+      swimlaneId: string;
+      content: string;
+      startTime?: string;
+      duration?: number;
+    }) => {
+      const response = await apiRequest(
+        `/api/personal-tasks/swimlanes/${swimlaneId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ content, startTime, duration }),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to update swimlane");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["personal-tasks", "table", selectedTableId],
+      });
+      setIsEditSwimlaneOpen(false);
+      setSwimlaneToEdit(null);
+      toast.success("Swimlane updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update swimlane: ${error.message}`);
     },
   });
 
@@ -347,7 +427,11 @@ const PersonalTaskPage: React.FC = () => {
       priority?: string;
       taskDate: string;
       detail?: string | null;
-      checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
+      checklist?: Array<{
+        id: string;
+        description: string;
+        isComplete: boolean;
+      }> | null;
     }) => {
       const response = await apiRequest("/api/personal-tasks/tasks", {
         method: "POST",
@@ -380,7 +464,11 @@ const PersonalTaskPage: React.FC = () => {
       status?: string;
       priority?: string;
       detail?: string | null;
-      checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
+      checklist?: Array<{
+        id: string;
+        description: string;
+        isComplete: boolean;
+      }> | null;
       taskDate?: string;
       swimlaneId?: string;
     }) => {
@@ -456,7 +544,11 @@ const PersonalTaskPage: React.FC = () => {
     },
   });
 
-  const handleCreateTable = (startDate: string, week: number, description?: string) => {
+  const handleCreateTable = (
+    startDate: string,
+    week: number,
+    description?: string
+  ) => {
     createTableMutation.mutate({ startDate, week, description });
   };
 
@@ -465,7 +557,12 @@ const PersonalTaskPage: React.FC = () => {
     setIsEditTableOpen(true);
   };
 
-  const handleUpdateTable = (tableId: string, startDate: string, week: number, description?: string) => {
+  const handleUpdateTable = (
+    tableId: string,
+    startDate: string,
+    week: number,
+    description?: string
+  ) => {
     updateTableMutation.mutate({ tableId, startDate, week, description });
   };
 
@@ -473,14 +570,14 @@ const PersonalTaskPage: React.FC = () => {
     copyTaskMutation.mutate(task);
   };
 
-  const handleCreateSwimlane = (data: { 
-    content: string; 
-    startTime?: string; 
+  const handleCreateSwimlane = (data: {
+    content: string;
+    startTime?: string;
     duration?: number;
   }) => {
     if (!selectedTableId) return;
-    createSwimlaneMutation.mutate({ 
-      tableId: selectedTableId, 
+    createSwimlaneMutation.mutate({
+      tableId: selectedTableId,
       content: data.content,
       startTime: data.startTime,
       duration: data.duration,
@@ -523,7 +620,11 @@ const PersonalTaskPage: React.FC = () => {
     priority: string,
     taskDate: string,
     detail?: string,
-    checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null
+    checklist?: Array<{
+      id: string;
+      description: string;
+      isComplete: boolean;
+    }> | null
   ) => {
     if (!editingTask) return;
 
@@ -537,7 +638,11 @@ const PersonalTaskPage: React.FC = () => {
         status: string;
         priority: string;
         detail: string | null;
-        checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
+        checklist?: Array<{
+          id: string;
+          description: string;
+          isComplete: boolean;
+        }> | null;
       } = {
         taskId: editingTask.task.taskId,
         content,
@@ -555,7 +660,11 @@ const PersonalTaskPage: React.FC = () => {
         priority: string;
         taskDate: string;
         detail: string | null;
-        checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
+        checklist?: Array<{
+          id: string;
+          description: string;
+          isComplete: boolean;
+        }> | null;
       } = {
         swimlaneId: editingTask.swimlaneId,
         content,
@@ -588,6 +697,23 @@ const PersonalTaskPage: React.FC = () => {
     }
   };
 
+  const handleEditSwimlane = (swimlane: SwimlaneEditPayload) => {
+    setSwimlaneToEdit({
+      swimlaneId: swimlane.swimlaneId,
+      content: swimlane.content,
+      startTime: swimlane.startTime,
+      duration: swimlane.duration,
+    });
+    setIsEditSwimlaneOpen(true);
+  };
+
+  const handleUpdateSwimlane = (
+    swimlaneId: string,
+    data: { content: string; startTime?: string; duration?: number }
+  ) => {
+    updateSwimlaneMutation.mutate({ swimlaneId, ...data });
+  };
+
   const handleDeleteTask = (taskId: string, taskContent: string) => {
     setTaskToDelete({
       taskId,
@@ -613,7 +739,11 @@ const PersonalTaskPage: React.FC = () => {
     status: string,
     priority: string,
     detail?: string,
-    checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null
+    checklist?: Array<{
+      id: string;
+      description: string;
+      isComplete: boolean;
+    }> | null
   ) => {
     const detailValue = detail && detail.trim() ? detail.trim() : null;
     const checklistValue = checklist !== undefined ? checklist : null;
@@ -623,7 +753,11 @@ const PersonalTaskPage: React.FC = () => {
       status: string;
       priority: string;
       detail: string | null;
-      checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
+      checklist?: Array<{
+        id: string;
+        description: string;
+        isComplete: boolean;
+      }> | null;
     } = {
       taskId,
       content,
@@ -635,7 +769,11 @@ const PersonalTaskPage: React.FC = () => {
     updateTaskMutation.mutate(updateData);
   };
 
-  const handleMoveTask = (taskId: string, newTaskDate: string, newSwimlaneId?: string) => {
+  const handleMoveTask = (
+    taskId: string,
+    newTaskDate: string,
+    newSwimlaneId?: string
+  ) => {
     updateTaskMutation.mutate({
       taskId,
       taskDate: newTaskDate,
@@ -653,12 +791,16 @@ const PersonalTaskPage: React.FC = () => {
     let startDate: Date;
     if (startDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
       // It's already in YYYY-MM-DD format, create date in local timezone
-      const [year, month, day] = startDateStr.split('-').map(Number);
+      const [year, month, day] = startDateStr.split("-").map(Number);
       startDate = new Date(year, month - 1, day);
     } else {
       // Parse ISO string and use local date
       const parsed = parseISO(startDateStr);
-      startDate = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+      startDate = new Date(
+        parsed.getFullYear(),
+        parsed.getMonth(),
+        parsed.getDate()
+      );
     }
     // Add days to get the target date
     const targetDate = addDays(startDate, editingTask.dayIndex);
@@ -685,16 +827,20 @@ const PersonalTaskPage: React.FC = () => {
           <Button
             variant="outline"
             onClick={handleSendEmail}
-            disabled={sendEmailMutation.isPending || !emailSettings?.data.sendPersonalTasksEmail}
-            title={!emailSettings?.data.sendPersonalTasksEmail ? "Enable email notifications in Settings first" : "Send weekly progress report email"}
+            disabled={
+              sendEmailMutation.isPending ||
+              !emailSettings?.data.sendPersonalTasksEmail
+            }
+            title={
+              !emailSettings?.data.sendPersonalTasksEmail
+                ? "Enable email notifications in Settings first"
+                : "Send weekly progress report email"
+            }
           >
             <Mail className="h-4 w-4 mr-2" />
             {sendEmailMutation.isPending ? "Sending..." : "Send Email"}
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate("/self-study")}
-          >
+          <Button variant="outline" onClick={() => navigate("/self-study")}>
             <BookOpen className="h-4 w-4 mr-2" />
             Self Study
           </Button>
@@ -760,12 +906,11 @@ const PersonalTaskPage: React.FC = () => {
               className="w-full sm:w-auto"
             />
           </div>
-          {(searchQuery || weekFilter !== null || startDateFilter || endDateFilter) && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleClearFilters}
-            >
+          {(searchQuery ||
+            weekFilter !== null ||
+            startDateFilter ||
+            endDateFilter) && (
+            <Button variant="outline" size="sm" onClick={handleClearFilters}>
               Clear Filters
             </Button>
           )}
@@ -795,40 +940,41 @@ const PersonalTaskPage: React.FC = () => {
         onEditTable={handleEditTable}
       />
 
-        {tableData?.data && (
-          <>
-            <WeekTable
-              startDate={tableData.data.startDate}
-              week={tableData.data.week}
-              swimlanes={tableData.data.swimlanes}
-              onAddSwimlane={() => setIsCreateSwimlaneOpen(true)}
-              onDeleteSwimlane={handleDeleteSwimlane}
-              onAddTask={handleAddTask}
-              onEditTask={handleEditTask}
-              onDeleteTask={handleDeleteTask}
-              onMoveTask={handleMoveTask}
-              onCopyTask={handleCopyTask}
-            />
+      {tableData?.data && (
+        <>
+          <WeekTable
+            startDate={tableData.data.startDate}
+            week={tableData.data.week}
+            swimlanes={tableData.data.swimlanes}
+            onAddSwimlane={() => setIsCreateSwimlaneOpen(true)}
+            onDeleteSwimlane={handleDeleteSwimlane}
+            onEditSwimlane={handleEditSwimlane}
+            onAddTask={handleAddTask}
+            onEditTask={handleEditTask}
+            onDeleteTask={handleDeleteTask}
+            onMoveTask={handleMoveTask}
+            onCopyTask={handleCopyTask}
+          />
 
-            <CreateSwimlaneDialog
-              open={isCreateSwimlaneOpen}
-              onOpenChange={setIsCreateSwimlaneOpen}
-              onCreate={handleCreateSwimlane}
-              isLoading={createSwimlaneMutation.isPending}
-            />
+          <CreateSwimlaneDialog
+            open={isCreateSwimlaneOpen}
+            onOpenChange={setIsCreateSwimlaneOpen}
+            onCreate={handleCreateSwimlane}
+            isLoading={createSwimlaneMutation.isPending}
+          />
 
-            <TaskSummaryTables
-              swimlanes={tableData.data.swimlanes}
-              onViewTask={handleViewTask}
-              onDeleteTask={handleDeleteTask}
-            />
+          <TaskSummaryTables
+            swimlanes={tableData.data.swimlanes}
+            onViewTask={handleViewTask}
+            onDeleteTask={handleDeleteTask}
+          />
 
-            <PerformanceStats
-              swimlanes={tableData.data.swimlanes}
-              startDate={tableData.data.startDate}
-            />
-          </>
-        )}
+          <PerformanceStats
+            swimlanes={tableData.data.swimlanes}
+            startDate={tableData.data.startDate}
+          />
+        </>
+      )}
 
       <TaskDialog
         task={editingTask?.task || null}
@@ -851,6 +997,14 @@ const PersonalTaskPage: React.FC = () => {
               }
             : undefined
         }
+      />
+
+      <EditSwimlaneDialog
+        open={isEditSwimlaneOpen}
+        onOpenChange={setIsEditSwimlaneOpen}
+        swimlane={swimlaneToEdit}
+        onUpdate={handleUpdateSwimlane}
+        isLoading={updateSwimlaneMutation.isPending}
       />
 
       <DeleteSwimlaneDialog

@@ -39,7 +39,11 @@ export const CreateTableDialog: React.FC<CreateTableDialogProps> = ({
   const handleCreate = () => {
     const weekStart = startOfWeek(startDate, { weekStartsOn: 1 });
     const week = getWeek(weekStart, { weekStartsOn: 1 });
-    onCreate(format(weekStart, "yyyy-MM-dd"), week, description.trim() || undefined);
+    onCreate(
+      format(weekStart, "yyyy-MM-dd"),
+      week,
+      description.trim() || undefined
+    );
   };
 
   const handleClose = () => {
@@ -54,7 +58,8 @@ export const CreateTableDialog: React.FC<CreateTableDialogProps> = ({
           <DialogTitle>Create New Table</DialogTitle>
           <DialogDescription>
             Select the start date of the week for this table. Three default
-            swimlanes (Sáng, Chiều, Tối) will be created automatically.
+            swimlanes (Morning, Afternoon, Evening) will be created
+            automatically.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -70,7 +75,11 @@ export const CreateTableDialog: React.FC<CreateTableDialogProps> = ({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                  {startDate ? (
+                    format(startDate, "PPP")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -99,11 +108,7 @@ export const CreateTableDialog: React.FC<CreateTableDialogProps> = ({
           </div>
         </div>
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button onClick={handleCreate} disabled={isLoading}>
