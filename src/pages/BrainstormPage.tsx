@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import mermaid from "mermaid";
 import pako from "pako";
@@ -23,7 +23,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, Save, ExternalLink, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Save,
+  ExternalLink,
+  AlertTriangle,
+  Download,
+} from "lucide-react";
 import {
   fetchBrainstorms,
   createBrainstorm,
@@ -69,7 +76,76 @@ const DEFAULT_CONTENT: Record<string, string> = {
     "quadrantChart\n  title Reach and engagement of campaigns\n  x-axis Low Reach --> High Reach\n  y-axis Low Engagement --> High Engagement\n  quadrant-1 We should expand\n  quadrant-2 Need to promote\n  quadrant-3 Re-evaluate\n  quadrant-4 May be improved\n  Campaign A: [0.3, 0.6]\n  Campaign B: [0.45, 0.23]",
 };
 
-function MermaidPreview({ content }: { content: string }) {
+function getSvgDimensions(svgString: string): { w: number; h: number } {
+  const viewBoxMatch = svgString.match(
+    /viewBox\s*=\s*["']?\s*(-?[\d.]+)\s+(-?[\d.]+)\s+([\d.]+)\s+([\d.]+)\s*["']?/
+  );
+  if (viewBoxMatch) {
+    const w = Math.ceil(Number(viewBoxMatch[3]));
+    const h = Math.ceil(Number(viewBoxMatch[4]));
+    if (w > 0 && h > 0) return { w, h };
+  }
+  const wMatch = svgString.match(/\bwidth\s*=\s*["']?([\d.]+)/);
+  const hMatch = svgString.match(/\bheight\s*=\s*["']?([\d.]+)/);
+  if (wMatch && hMatch) {
+    const w = Math.ceil(Number(wMatch[1]));
+    const h = Math.ceil(Number(hMatch[1]));
+    if (w > 0 && h > 0) return { w, h };
+  }
+  return { w: 800, h: 600 };
+}
+
+function ensureSvgHasExplicitSize(
+  svgString: string,
+  w: number,
+  h: number
+): string {
+  const hasWidth = /\bwidth\s*=/.test(svgString);
+  const hasHeight = /\bheight\s*=/.test(svgString);
+  if (hasWidth && hasHeight) return svgString;
+  return svgString.replace(
+    /<svg([^>]*)>/,
+    (_, attrs) =>
+      `<svg${attrs}${hasWidth ? "" : ` width="${w}"`}${
+        hasHeight ? "" : ` height="${h}"`
+      }>`
+  );
+}
+
+function svgToPngDataUrl(svgString: string, scale = 2): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const { w: svgW, h: svgH } = getSvgDimensions(svgString);
+    const normalizedSvg = ensureSvgHasExplicitSize(svgString, svgW, svgH);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = svgW * scale;
+        canvas.height = svgH * scale;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas not supported"));
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/png"));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    img.onerror = () => reject(new Error("Failed to load SVG"));
+    img.src =
+      "data:image/svg+xml;base64," +
+      btoa(unescape(encodeURIComponent(normalizedSvg)));
+  });
+}
+
+function MermaidPreview({
+  content,
+  onRendered,
+}: {
+  content: string;
+  onRendered?: (svg: string) => void;
+}) {
   const [svg, setSvg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -96,7 +172,9 @@ function MermaidPreview({ content }: { content: string }) {
         if (cancelled) return;
         const svgEl = container.querySelector("svg");
         if (svgEl) {
-          setSvg(container.innerHTML);
+          const html = container.innerHTML;
+          setSvg(html);
+          onRendered?.(html);
         } else {
           setError("Could not render diagram");
         }
@@ -114,7 +192,7 @@ function MermaidPreview({ content }: { content: string }) {
     return () => {
       cancelled = true;
     };
-  }, [content]);
+  }, [content, onRendered]);
 
   if (error) {
     return (
@@ -160,6 +238,7 @@ const BrainstormPage: React.FC = () => {
   );
   const [deleteConfirmItem, setDeleteConfirmItem] =
     useState<BrainstormItem | null>(null);
+  const lastRenderedSvgRef = useRef<string | null>(null);
 
   const {
     data: items = [],
@@ -274,6 +353,31 @@ const BrainstormPage: React.FC = () => {
     window.open(`https://mermaid.live/edit#pako:${encoded}`, "_blank");
   };
 
+  const handleExportPng = useCallback(async () => {
+    const svg = lastRenderedSvgRef.current;
+    if (!svg) {
+      toast.error("No diagram to export. Enter and preview a diagram first.");
+      return;
+    }
+    try {
+      const dataUrl = await svgToPngDataUrl(svg);
+      const link = document.createElement("a");
+      const baseName =
+        (name || "brainstorm").trim().replace(/[/\\?*:|"]/g, "_") ||
+        "brainstorm";
+      link.download = `${baseName}.png`;
+      link.href = dataUrl;
+      link.click();
+      toast.success("Exported as PNG");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    }
+  }, [name]);
+
+  const handlePreviewRendered = useCallback((svg: string) => {
+    lastRenderedSvgRef.current = svg;
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -323,6 +427,15 @@ const BrainstormPage: React.FC = () => {
           >
             <Plus className="w-4 h-4 mr-1" />
             New
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportPng}
+            title="Export diagram as PNG"
+          >
+            <Download className="w-4 h-4 mr-1" />
+            Export PNG
           </Button>
           <Button
             variant="outline"
@@ -437,7 +550,10 @@ const BrainstormPage: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <Label>Preview</Label>
-                <MermaidPreview content={content} />
+                <MermaidPreview
+                  content={content}
+                  onRendered={handlePreviewRendered}
+                />
               </div>
             </CardContent>
           </Card>
