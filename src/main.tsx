@@ -1,6 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+} from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Provider } from "react-redux";
@@ -14,6 +18,7 @@ import GroupTaskPage from "./pages/GroupTaskPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import SelfStudyPage from "./pages/SelfStudyPage";
 import SettingsPage from "./pages/SettingsPage";
+import BrainstormPage from "./pages/BrainstormPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -83,6 +88,14 @@ const router = createBrowserRouter([
             element: (
               <ProtectedRoute>
                 <SettingsPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "brainstorm",
+            element: (
+              <ProtectedRoute>
+                <BrainstormPage />
               </ProtectedRoute>
             ),
           },

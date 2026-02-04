@@ -20,6 +20,7 @@ const DashboardLayout: React.FC = () => {
     { path: "/personal-tasks", label: "Personal Tasks" },
     { path: "/group-tasks", label: "Group Tasks" },
     { path: "/portfolio", label: "Portfolio" },
+    { path: "/brainstorm", label: "Brainstorm" },
     { path: "/settings", label: "Settings" },
   ];
 
@@ -27,11 +28,7 @@ const DashboardLayout: React.FC = () => {
     <div className="dashboard-layout flex h-screen">
       <aside className="w-64 bg-gray-100 p-4 border-r border-gray-300 flex flex-col">
         <div className="font-bold text-xl mb-4">Admin Dashboard</div>
-        {user && (
-          <div className="text-sm text-gray-600 mb-4">
-            {user.email}
-          </div>
-        )}
+        {user && <div className="text-sm text-gray-600 mb-4">{user.email}</div>}
         <nav className="flex-grow space-y-1">
           {navItems.map((item) => (
             <Link
