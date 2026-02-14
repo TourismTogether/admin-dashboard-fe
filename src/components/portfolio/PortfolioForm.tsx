@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AvatarPreview } from "./AvatarPreview";
 import { AvatarInput } from "./AvatarInput";
-import { generateAvatarUrl } from "./shared/utils";
 import type { PortfolioUpdateData } from "@/lib/api/portfolioApi";
 
 interface PortfolioFormProps {
