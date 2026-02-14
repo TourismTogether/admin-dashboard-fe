@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { format, addDays, addWeeks, startOfWeek } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -25,6 +25,8 @@ export interface GroupTaskForWeek {
 interface GroupTaskWeekTableProps {
   tasks: GroupTaskForWeek[];
   onTaskClick?: (task: GroupTaskForWeek) => void;
+  onEdit?: (task: GroupTaskForWeek) => void;
+  onDelete?: (task: GroupTaskForWeek) => void;
   getStatusStyles?: (status: string) => string;
 }
 
@@ -45,6 +47,8 @@ function taskSpansDay(
 export const GroupTaskWeekTable: React.FC<GroupTaskWeekTableProps> = ({
   tasks,
   onTaskClick,
+  onEdit,
+  onDelete,
   getStatusStyles = () => "bg-gray-100 text-gray-800",
 }) => {
   const [weekOffset, setWeekOffset] = useState(0);
@@ -130,8 +134,8 @@ export const GroupTaskWeekTable: React.FC<GroupTaskWeekTableProps> = ({
                           <div
                             key={task.groupTaskId}
                             className={cn(
-                              "p-2 border rounded bg-card hover:bg-accent cursor-pointer group/task",
-                              onTaskClick && "hover:ring-1 hover:ring-primary/30"
+                              "p-2 border rounded bg-card hover:bg-accent group/task",
+                              onTaskClick && "cursor-pointer hover:ring-1 hover:ring-primary/30"
                             )}
                             onClick={() => onTaskClick?.(task)}
                           >
@@ -172,6 +176,41 @@ export const GroupTaskWeekTable: React.FC<GroupTaskWeekTableProps> = ({
                                   </div>
                                 ) : null}
                               </div>
+                              {(onEdit || onDelete) && (
+                                <div
+                                  className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover/task:opacity-100 transition-opacity"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {onEdit && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onEdit(task);
+                                      }}
+                                      title="Edit task"
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </Button>
+                                  )}
+                                  {onDelete && (
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete(task);
+                                      }}
+                                      title="Delete task"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}

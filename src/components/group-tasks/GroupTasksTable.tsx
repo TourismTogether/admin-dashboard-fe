@@ -1,5 +1,6 @@
 import React from "react";
 import { format, parseISO } from "date-fns";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -22,28 +23,26 @@ export interface GroupTaskForTable {
   assignees?: { userId: string; email: string; nickname?: string | null; fullname?: string | null }[];
 }
 
-function getPriorityVariant(priority: string): "destructive" | "secondary" | "outline" {
-  switch (priority.toLowerCase()) {
-    case "high":
-      return "destructive";
-    case "medium":
-      return "secondary";
-    default:
-      return "outline";
-  }
+const priorityStyles: Record<string, string> = {
+  high: "border-red-200 bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
+  medium: "border-amber-200 bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800",
+  low: "border-slate-200 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600",
+};
+
+function getPriorityClassName(priority: string): string {
+  return priorityStyles[priority.toLowerCase()] ?? "border-border bg-muted text-muted-foreground";
 }
 
-function getStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
-  switch (status.toLowerCase()) {
-    case "done":
-      return "default";
-    case "in_progress":
-      return "secondary";
-    case "delay":
-      return "destructive";
-    default:
-      return "outline";
-  }
+const statusStyles: Record<string, string> = {
+  done: "border-emerald-200 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800",
+  in_progress: "border-blue-200 bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800",
+  todo: "border-slate-200 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-600",
+  reopen: "border-orange-200 bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800",
+  delay: "border-red-200 bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
+};
+
+function getStatusClassName(status: string): string {
+  return statusStyles[status.toLowerCase()] ?? "border-border bg-muted text-muted-foreground";
 }
 
 interface GroupTasksTableProps {
@@ -101,12 +100,12 @@ export const GroupTasksTable: React.FC<GroupTasksTableProps> = ({
                     : "–"}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getPriorityVariant(task.priority)}>
+                  <Badge variant="outline" className={cn("font-medium", getPriorityClassName(task.priority))}>
                     {task.priority}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getStatusVariant(task.status)}>
+                  <Badge variant="outline" className={cn("font-medium", getStatusClassName(task.status))}>
                     {task.status.replace(/_/g, " ")}
                   </Badge>
                 </TableCell>

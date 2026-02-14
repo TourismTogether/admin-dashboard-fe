@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, startOfWeek } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Trash2, X, Edit2, Filter, RefreshCw, UserMinus, LogOut } from "lucide-react";
+import { Plus, Search, Trash2, X, Edit2, Filter, RefreshCw, UserMinus, LogOut, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -104,12 +104,25 @@ const GroupTaskPage: React.FC = () => {
   const [groupToDeleteId, setGroupToDeleteId] = useState<string | null>(null);
   const [kickMemberId, setKickMemberId] = useState<string | null>(null);
   const [isLeaveGroupDialogOpen, setIsLeaveGroupDialogOpen] = useState(false);
+  const [taskSearchQuery, setTaskSearchQuery] = useState("");
+  const [taskSortBy, setTaskSortBy] = useState<string>("start_desc");
+  const [taskPage, setTaskPage] = useState(0);
 
   const currentUser = useSelector(selectAuthUser);
+
+  const PAGE_SIZE = 20;
 
   const getTodayDateString = () => {
     const today = new Date();
     return today.toISOString().split("T")[0];
+  };
+
+  const toDateOnly = (value: string | undefined | null): string => {
+    if (!value || typeof value !== "string") return "";
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    if (trimmed.includes("T")) return trimmed.split("T")[0];
+    return trimmed;
   };
 
   useEffect(() => {
@@ -137,19 +150,23 @@ const GroupTaskPage: React.FC = () => {
   });
 
   // Fetch group tasks for selected group
-  const { data: tasksData, isLoading: isLoadingTasks } = useQuery<
+  const { data: tasksData, isLoading: isLoadingTasks, isError: isTasksError, error: tasksError } = useQuery<
     { data: GroupTask[] }
   >({
     queryKey: ["group-tasks", selectedGroupId],
     queryFn: async () => {
       if (!selectedGroupId) return { data: [] };
       const response = await apiRequest(`/api/group-tasks?groupId=${selectedGroupId}`);
+      if (response.status === 403) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || "You are not a member of this group");
+      }
       if (!response.ok) throw new Error("Failed to fetch group tasks");
       const result = await response.json();
-      console.log("Group tasks response:", result.data);
       return result;
     },
     enabled: !!selectedGroupId,
+    retry: false,
   });
 
   // Fetch members for selected group
@@ -165,6 +182,28 @@ const GroupTaskPage: React.FC = () => {
       enabled: !!selectedGroupId,
     }
   );
+
+  // Redirect if URL has a groupId the user is not a member of
+  useEffect(() => {
+    if (isLoadingGroups || !groupsData?.data || !selectedGroupId) return;
+    const isMember = groupsData.data.some((g) => g.groupId === selectedGroupId);
+    if (!isMember) {
+      setSelectedGroupId(null);
+      navigate("/group-tasks", { replace: true });
+      toast.error("You are not a member of this group");
+    }
+  }, [isLoadingGroups, groupsData?.data, selectedGroupId, navigate]);
+
+  // Redirect when tasks API returns 403 (e.g. user was removed from group)
+  useEffect(() => {
+    if (!isTasksError || !tasksError || !selectedGroupId) return;
+    const msg = tasksError.message || "";
+    if (msg.includes("not a member") || msg.includes("403")) {
+      setSelectedGroupId(null);
+      navigate("/group-tasks", { replace: true });
+      toast.error("You are not a member of this group");
+    }
+  }, [isTasksError, tasksError, selectedGroupId, navigate]);
 
   // Create group mutation
   const createGroup = useMutation({
@@ -439,18 +478,18 @@ const GroupTaskPage: React.FC = () => {
 
   const getStatusStyles = (status: string) => {
     switch (status.toLowerCase()) {
-      case "todo":
-        return "bg-gray-100 text-gray-800";
-      case "in_progress":
-        return "bg-blue-100 text-blue-800";
       case "done":
-        return "bg-green-100 text-green-800";
+        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300";
+      case "in_progress":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300";
+      case "todo":
+        return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400";
       case "reopen":
-        return "bg-orange-100 text-orange-800";
+        return "bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-300";
       case "delay":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400";
     }
   };
 
@@ -460,6 +499,67 @@ const GroupTaskPage: React.FC = () => {
       .includes(assigneeSearchQuery.toLowerCase())
   );
 
+  const rawTasks = tasksData?.data ?? [];
+  const filteredTasks = useMemo(() => {
+    if (!taskSearchQuery.trim()) return rawTasks;
+    const q = taskSearchQuery.toLowerCase();
+    return rawTasks.filter(
+      (t) =>
+        (t.requirement && t.requirement.toLowerCase().includes(q)) ||
+        (t.assignees?.some((a) => {
+          const name = (a.nickname || a.fullname || a.email || "").toString().toLowerCase();
+          const email = (a.email || "").toString().toLowerCase();
+          return name.includes(q) || email.includes(q);
+        }))
+    );
+  }, [rawTasks, taskSearchQuery]);
+
+  const sortedTasks = useMemo(() => {
+    const list = [...filteredTasks];
+    if (!taskSortBy || taskSortBy === "default") return list;
+    const safeDate = (t: GroupTask, field: "startDate" | "endDate") => {
+      const v = t[field] || t.startDate || t.endDate;
+      if (!v) return new Date(0);
+      try {
+        const d = parseISO(v);
+        return Number.isNaN(d.getTime()) ? new Date(0) : d;
+      } catch {
+        return new Date(0);
+      }
+    };
+    const weekStart = (t: GroupTask) => {
+      const d = safeDate(t, "startDate");
+      return startOfWeek(d, { weekStartsOn: 1 }).getTime();
+    };
+    list.sort((a, b) => {
+      let cmp = 0;
+      if (taskSortBy === "start_asc" || taskSortBy === "start_desc") {
+        cmp = safeDate(a, "startDate").getTime() - safeDate(b, "startDate").getTime();
+        if (taskSortBy === "start_desc") cmp = -cmp;
+      } else if (taskSortBy === "end_asc" || taskSortBy === "end_desc") {
+        cmp = safeDate(a, "endDate").getTime() - safeDate(b, "endDate").getTime();
+        if (taskSortBy === "end_desc") cmp = -cmp;
+      } else if (taskSortBy === "week_asc" || taskSortBy === "week_desc") {
+        cmp = weekStart(a) - weekStart(b);
+        if (taskSortBy === "week_desc") cmp = -cmp;
+      }
+      return cmp;
+    });
+    return list;
+  }, [filteredTasks, taskSortBy]);
+
+  const totalTaskPages = Math.max(1, Math.ceil(sortedTasks.length / PAGE_SIZE));
+  const taskPageClamped = Math.min(taskPage, totalTaskPages - 1);
+  const paginatedTasks = useMemo(
+    () => sortedTasks.slice(taskPageClamped * PAGE_SIZE, (taskPageClamped + 1) * PAGE_SIZE),
+    [sortedTasks, taskPageClamped]
+  );
+  const taskStartRow = taskPageClamped * PAGE_SIZE + 1;
+  const taskEndRow = Math.min((taskPageClamped + 1) * PAGE_SIZE, sortedTasks.length);
+
+  useEffect(() => {
+    setTaskPage(0);
+  }, [taskSearchQuery, taskSortBy]);
 
   if (isLoadingGroups) {
     return (
@@ -1052,16 +1152,58 @@ const GroupTaskPage: React.FC = () => {
                           setViewTaskId(task.groupTaskId);
                           setIsViewTaskOpen(true);
                         }}
+                        onEdit={(task) => {
+                          setEditingTaskId(task.groupTaskId);
+                          setEditTaskRequirement(task.requirement || "");
+                          setEditTaskPriority(task.priority);
+                          setEditTaskStatus(task.status);
+                          setEditTaskStartDate(toDateOnly(task.startDate));
+                          setEditTaskEndDate(toDateOnly(task.endDate));
+                          setEditSelectedAssignees((task.assignees || []).map((a) => a.userId));
+                          setEditAssigneeSearchQuery("");
+                          setIsEditTaskOpen(true);
+                        }}
+                        onDelete={(task) => {
+                          setDeleteTaskId(task.groupTaskId);
+                          setIsDeleteTaskDialogOpen(true);
+                        }}
                       />
                     )
                   ) : activeTab === "tasks" ? (
                     isLoadingTasks ? (
                       <div className="text-gray-500 text-sm">Loading tasks...</div>
                     ) : (
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-semibold">Group Tasks ({tasksData?.data?.length ?? 0})</h3>
+                      <div className="space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                          <h3 className="text-lg font-semibold">Group Tasks ({sortedTasks.length})</h3>
+                          <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto">
+                            <div className="relative flex-1 sm:max-w-[220px]">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="text"
+                                placeholder="Search task or assignee..."
+                                value={taskSearchQuery}
+                                onChange={(e) => setTaskSearchQuery(e.target.value)}
+                                className="pl-9 h-9"
+                              />
+                            </div>
+                            <select
+                              value={taskSortBy}
+                              onChange={(e) => setTaskSortBy(e.target.value)}
+                              className="flex h-9 min-w-[160px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            >
+                              <option value="default">Sort: Default</option>
+                              <option value="start_asc">Start date (oldest first)</option>
+                              <option value="start_desc">Start date (newest first)</option>
+                              <option value="end_asc">End date (oldest first)</option>
+                              <option value="end_desc">End date (newest first)</option>
+                              <option value="week_asc">Week (oldest first)</option>
+                              <option value="week_desc">Week (newest first)</option>
+                            </select>
+                          </div>
+                        </div>
                         <GroupTasksTable
-                          tasks={tasksData?.data ?? []}
+                          tasks={paginatedTasks}
                           emptyMessage="No tasks in this group yet."
                           onView={(task) => {
                             setViewTaskId(task.groupTaskId);
@@ -1072,8 +1214,8 @@ const GroupTaskPage: React.FC = () => {
                             setEditTaskRequirement(task.requirement || "");
                             setEditTaskPriority(task.priority);
                             setEditTaskStatus(task.status);
-                            setEditTaskStartDate(task.startDate || "");
-                            setEditTaskEndDate(task.endDate || "");
+                            setEditTaskStartDate(toDateOnly(task.startDate));
+                            setEditTaskEndDate(toDateOnly(task.endDate));
                             setEditSelectedAssignees((task.assignees || []).map((a) => a.userId));
                             setEditAssigneeSearchQuery("");
                             setIsEditTaskOpen(true);
@@ -1084,6 +1226,34 @@ const GroupTaskPage: React.FC = () => {
                           }}
                           canEdit={true}
                         />
+                        {sortedTasks.length > PAGE_SIZE && (
+                          <div className="flex items-center justify-between pt-2">
+                            <p className="text-sm text-muted-foreground">
+                              Showing {taskStartRow} to {taskEndRow} of {sortedTasks.length} tasks
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setTaskPage((p) => Math.max(0, p - 1))}
+                                disabled={taskPageClamped <= 0}
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                              </Button>
+                              <span className="text-sm px-2">
+                                Page {taskPageClamped + 1} of {totalTaskPages}
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setTaskPage((p) => p + 1)}
+                                disabled={taskPageClamped >= totalTaskPages - 1}
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )
                   ) : activeTab === "timeline" ? (
@@ -1101,8 +1271,14 @@ const GroupTaskPage: React.FC = () => {
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center h-full min-h-[320px] rounded-lg border border-dashed bg-gray-50 text-gray-500">
-              Select a group to view tasks
+            <div className="flex flex-col items-center justify-center min-h-[320px] rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/30 px-6 py-12 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
+                <Users className="h-8 w-8" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-1">No group selected</h3>
+              <p className="text-sm text-muted-foreground max-w-[280px]">
+                Choose a group from the list on the left to view and manage its tasks.
+              </p>
             </div>
           )}
         </section>
@@ -1123,8 +1299,18 @@ const GroupTaskPage: React.FC = () => {
           {viewTaskId && (() => {
             const task = tasksData?.data?.find((t) => t.groupTaskId === viewTaskId);
             if (!task) return null;
-            const statusVariant = task.status === "done" ? "default" : task.status === "in_progress" ? "secondary" : "outline";
-            const priorityVariant = task.priority === "high" ? "destructive" : task.priority === "medium" ? "secondary" : "outline";
+            const priorityClass: Record<string, string> = {
+              high: "border-red-200 bg-red-100 text-red-800",
+              medium: "border-amber-200 bg-amber-100 text-amber-800",
+              low: "border-slate-200 bg-slate-100 text-slate-700",
+            };
+            const statusClass: Record<string, string> = {
+              done: "border-emerald-200 bg-emerald-100 text-emerald-800",
+              in_progress: "border-blue-200 bg-blue-100 text-blue-800",
+              todo: "border-slate-200 bg-slate-100 text-slate-600",
+              reopen: "border-orange-200 bg-orange-100 text-orange-800",
+              delay: "border-red-200 bg-red-100 text-red-800",
+            };
             return (
               <div className="space-y-4">
                 <div className="rounded-lg border bg-muted/30 p-4">
@@ -1134,8 +1320,12 @@ const GroupTaskPage: React.FC = () => {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant={statusVariant}>{task.status.replace(/_/g, " ")}</Badge>
-                  <Badge variant={priorityVariant}>{task.priority}</Badge>
+                  <Badge variant="outline" className={statusClass[task.status.toLowerCase()] ?? "bg-muted text-muted-foreground"}>
+                    {task.status.replace(/_/g, " ")}
+                  </Badge>
+                  <Badge variant="outline" className={priorityClass[task.priority.toLowerCase()] ?? "bg-muted text-muted-foreground"}>
+                    {task.priority}
+                  </Badge>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="rounded-lg border bg-muted/20 px-3 py-2">
@@ -1340,13 +1530,15 @@ const GroupTaskPage: React.FC = () => {
               disabled={!editTaskRequirement.trim() || updateTask.isPending}
               onClick={() => {
                 if (!editingTaskId) return;
+                const start = toDateOnly(editTaskStartDate) || getTodayDateString();
+                const end = toDateOnly(editTaskEndDate) || start;
                 updateTask.mutate({
                   groupTaskId: editingTaskId,
                   requirement: editTaskRequirement,
                   priority: editTaskPriority,
                   status: editTaskStatus,
-                  startDate: editTaskStartDate || getTodayDateString(),
-                  endDate: editTaskEndDate || editTaskStartDate || getTodayDateString(),
+                  startDate: start,
+                  endDate: end,
                   assigneeIds: editSelectedAssignees,
                 });
               }}
