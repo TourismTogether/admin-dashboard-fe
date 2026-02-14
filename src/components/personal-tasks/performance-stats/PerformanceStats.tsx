@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import { format, parseISO, startOfWeek, eachDayOfInterval } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Task, Swimlane } from "../shared/types";
+import type { Swimlane } from "../shared/types";
 
 interface PerformanceStatsProps {
   swimlanes: Swimlane[];

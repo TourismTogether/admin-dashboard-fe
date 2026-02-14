@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { AvatarPreview } from "./AvatarPreview";
 import { AvatarInput } from "./AvatarInput";
 import { generateAvatarUrl } from "./shared/utils";
 import type { Portfolio, PortfolioUpdateData } from "@/lib/api/portfolioApi";
@@ -28,7 +27,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
   userEmail,
   onFieldChange,
   onAvatarChange,
-  isDragging = false,
+  isDragging: _isDragging = false,
 }) => {
   return (
     <Card>

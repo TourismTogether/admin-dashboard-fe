@@ -20,11 +20,9 @@ export const PomodoroTimer: React.FC = () => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Initialize audio for notification sound
+  // Initialize audio for notification sound (created on demand in playNotificationSound)
   useEffect(() => {
-    // Create a simple beep sound using Web Audio API
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioRef.current = null; // We'll create audio on demand
+    audioRef.current = null;
   }, []);
 
   const playNotificationSound = () => {

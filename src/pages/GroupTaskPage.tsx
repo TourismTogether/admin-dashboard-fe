@@ -1098,8 +1098,9 @@ const GroupTaskPage: React.FC = () => {
                                     size="sm"
                                     className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                                     onClick={() => setKickMemberId(member.userId)}
+                                    title="Kick"
                                   >
-                                    <UserMinus className="h-4 w-4" title="Kick" />
+                                    <UserMinus className="h-4 w-4" />
                                   </Button>
                                 )}
                               </div>
