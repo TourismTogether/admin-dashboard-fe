@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -42,8 +42,6 @@ interface FeedbackItem {
 
 const SettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [sendEmail, setSendEmail] = useState(false);
-  const [email, setEmail] = useState("");
   const [feedbackFormOpen, setFeedbackFormOpen] = useState(false);
   const [editingFeedback, setEditingFeedback] = useState<FeedbackItem | null>(null);
   const [feedbackName, setFeedbackName] = useState("");
@@ -51,8 +49,8 @@ const SettingsPage: React.FC = () => {
   const [deleteFeedbackId, setDeleteFeedbackId] = useState<string | null>(null);
   const [viewFeedback, setViewFeedback] = useState<FeedbackItem | null>(null);
 
-  // Fetch current settings
-  const { data: settingsData, isLoading } = useQuery<{
+  // Fetch current settings (used for loading state; email form disabled for now)
+  const { isLoading } = useQuery<{
     data: PersonalTaskEmailSettings;
   }>({
     queryKey: ["settings", "personal-tasks-email"],
@@ -62,39 +60,6 @@ const SettingsPage: React.FC = () => {
       return response.json();
     },
   });
-
-  // Update settings mutation
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (data: {
-      sendPersonalTasksEmail: boolean;
-      email: string;
-    }) => {
-      const response = await apiRequest("/api/settings/personal-tasks-email", {
-        method: "PUT",
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update settings");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-      toast.success("Settings updated successfully");
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to update settings");
-    },
-  });
-
-  // Sync state from fetched data
-  useEffect(() => {
-    if (settingsData?.data) {
-      setSendEmail(settingsData.data.sendPersonalTasksEmail);
-      setEmail(settingsData.data.email || "");
-    }
-  }, [settingsData]);
 
   // Feedback list
   const { data: feedbackData, isLoading: feedbackLoading } = useQuery<{ data: FeedbackItem[] }>({
