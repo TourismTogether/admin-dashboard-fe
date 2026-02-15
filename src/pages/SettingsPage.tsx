@@ -93,6 +93,7 @@ const SettingsPage: React.FC = () => {
         </p>
       </div>
 
+      {/* Email feature temporarily disabled (incomplete / has bugs) */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -100,60 +101,18 @@ const SettingsPage: React.FC = () => {
             Weekly Personal Task Email
           </CardTitle>
           <CardDescription>
-            Receive a weekly summary of your personal tasks via email every Monday
+            This feature is temporarily disabled (incomplete). It will be re-enabled in a future update.
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Receive a weekly summary of your personal tasks via email. Coming back soon.
+          </p>
+          {/* Original form commented out until email feature is fixed
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="send-email">Enable weekly email</Label>
-                <p className="text-sm text-muted-foreground">
-                  Send weekly personal task summary to your email
-                </p>
-              </div>
-              <Switch
-                id="send-email"
-                checked={sendEmail}
-                onCheckedChange={setSendEmail}
-              />
-            </div>
-
-            {sendEmail && (
-              <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your.email@example.com"
-                  required
-                />
-                <p className="text-sm text-muted-foreground">
-                  Default: your account email. You can change it here.
-                </p>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              disabled={updateSettingsMutation.isPending}
-              className="w-full sm:w-auto"
-            >
-              {updateSettingsMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Settings
-                </>
-              )}
-            </Button>
+            ...
           </form>
+          */}
         </CardContent>
       </Card>
     </div>

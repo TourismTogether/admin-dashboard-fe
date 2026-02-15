@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { format, addDays, parseISO } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Filter, RefreshCw, BookOpen, Mail } from "lucide-react";
+import { Plus, Search, Filter, RefreshCw, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,20 +108,8 @@ const PersonalTaskPage: React.FC = () => {
 
   const queryClient = useQueryClient();
 
-  // Fetch email settings
-  const { data: emailSettings } = useQuery<{
-    data: {
-      sendPersonalTasksEmail: boolean;
-      email: string | null;
-    };
-  }>({
-    queryKey: ["settings", "personal-tasks-email"],
-    queryFn: async () => {
-      const response = await apiRequest("/api/settings/personal-tasks-email");
-      if (!response.ok) throw new Error("Failed to fetch email settings");
-      return response.json();
-    },
-  });
+  // Email feature temporarily disabled (incomplete / has bugs)
+  // const { data: emailSettings } = useQuery({ queryKey: ["settings", "personal-tasks-email"], ... });
 
   // Fetch all tables
   const {
@@ -198,39 +186,9 @@ const PersonalTaskPage: React.FC = () => {
     setEndDateFilter("");
   };
 
-  // Send weekly email mutation
-  const sendEmailMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest(
-        "/api/personal-tasks/send-weekly-email",
-        {
-          method: "POST",
-          body: JSON.stringify({}), // Empty body to satisfy Fastify's JSON content-type requirement
-        }
-      );
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to send email");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      toast.success("Email sent successfully!");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to send email");
-    },
-  });
-
-  const handleSendEmail = () => {
-    if (!emailSettings?.data.sendPersonalTasksEmail) {
-      toast.error(
-        "Email notifications are not enabled. Please enable them in Settings first."
-      );
-      return;
-    }
-    sendEmailMutation.mutate();
-  };
+  // Email feature temporarily disabled (incomplete / has bugs)
+  // const sendEmailMutation = useMutation({ ... });
+  // const handleSendEmail = () => { ... };
 
   // Fetch selected table with swimlanes and tasks
   const { data: tableData } = useQuery<{ data: TableWithSwimlanes }>({
@@ -824,22 +782,8 @@ const PersonalTaskPage: React.FC = () => {
               className={`h-4 w-4 ${isLoadingTables ? "animate-spin" : ""}`}
             />
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleSendEmail}
-            disabled={
-              sendEmailMutation.isPending ||
-              !emailSettings?.data.sendPersonalTasksEmail
-            }
-            title={
-              !emailSettings?.data.sendPersonalTasksEmail
-                ? "Enable email notifications in Settings first"
-                : "Send weekly progress report email"
-            }
-          >
-            <Mail className="h-4 w-4 mr-2" />
-            {sendEmailMutation.isPending ? "Sending..." : "Send Email"}
-          </Button>
+          {/* Email feature temporarily disabled (incomplete / has bugs) */}
+          {/* <Button variant="outline" onClick={handleSendEmail} ... >Send Email</Button> */}
           <Button variant="outline" onClick={() => navigate("/self-study")}>
             <BookOpen className="h-4 w-4 mr-2" />
             Self Study
