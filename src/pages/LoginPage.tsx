@@ -22,8 +22,7 @@ import {
   selectIsAuthenticated,
 } from '@/store/authSlice';
 import type { AppDispatch } from '@/store/store';
-
-const API_URL = (import.meta.env.VITE_API_URL as string) || "http://localhost:8081";
+import { API_URL } from '@/lib/api';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();

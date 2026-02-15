@@ -1,7 +1,9 @@
 import { store } from "@/store/store";
 import { selectAuthToken } from "@/store/authSlice";
 
-const API_URL = (import.meta.env.VITE_API_URL as string) || "http://localhost:8081";
+/** Base URL for API (use VITE_API_URL in production). */
+export const API_URL =
+  (import.meta.env.VITE_API_URL as string) || "http://localhost:8081";
 
 export async function apiRequest(
   endpoint: string,
