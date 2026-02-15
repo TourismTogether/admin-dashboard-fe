@@ -20,9 +20,11 @@ import PortfolioPage from "./pages/PortfolioPage";
 import SelfStudyPage from "./pages/SelfStudyPage";
 import SettingsPage from "./pages/SettingsPage";
 import BrainstormPage from "./pages/BrainstormPage";
+import AdminFeedbackPage from "./pages/AdminFeedbackPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 
 const router = createBrowserRouter([
   {
@@ -97,6 +99,16 @@ const router = createBrowserRouter([
             element: (
               <ProtectedRoute>
                 <BrainstormPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "admin/feedback",
+            element: (
+              <ProtectedRoute>
+                <AdminRoute>
+                  <AdminFeedbackPage />
+                </AdminRoute>
               </ProtectedRoute>
             ),
           },

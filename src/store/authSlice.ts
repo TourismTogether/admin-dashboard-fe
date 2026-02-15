@@ -8,6 +8,7 @@ interface User {
   nickname?: string;
   fullname?: string;
   imageUrl?: string;
+  isAdmin?: boolean;
 }
 
 interface AuthState {
@@ -100,6 +101,7 @@ export const {
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
 export const selectAuthToken = (state: RootState) => state.auth.token;
 export const selectAuthUser = (state: RootState) => state.auth.user;
+export const selectIsAdmin = (state: RootState) => !!state.auth.user?.isAdmin;
 export const selectAuthLoading = (state: RootState) => state.auth.isLoading;
 export const selectAuthError = (state: RootState) => state.auth.error;
 
