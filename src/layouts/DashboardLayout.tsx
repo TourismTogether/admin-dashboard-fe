@@ -1,28 +1,48 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
-import { logout, selectAuthUser } from "@/store/authSlice";
+import { logout, selectAuthUser, selectAuthToken, setUser } from "@/store/authSlice";
 import type { AppDispatch } from "@/store/store";
+import { apiRequest } from "@/lib/api";
+
+const baseNavItems = [
+  { path: "/personal-tasks", label: "Personal Tasks" },
+  { path: "/group-tasks", label: "Group Tasks" },
+  { path: "/portfolio", label: "Portfolio" },
+  { path: "/brainstorm", label: "Brainstorm" },
+  { path: "/settings", label: "Settings" },
+];
 
 const DashboardLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector(selectAuthUser);
+  const token = useSelector(selectAuthToken);
+
+  useEffect(() => {
+    if (!token || user) return;
+    apiRequest("/api/auth/me")
+      .then((res) => {
+        if (res.ok) return res.json();
+        return null;
+      })
+      .then((data) => {
+        if (data?.user) dispatch(setUser(data.user));
+      })
+      .catch(() => {});
+  }, [token, user, dispatch]);
+
+  const navItems =
+    user?.isAdmin === true
+      ? [...baseNavItems, { path: "/admin/feedback", label: "Bug Reports" }]
+      : baseNavItems;
 
   const handleLogout = () => {
     dispatch(logout());
     navigate("/login");
   };
-
-  const navItems = [
-    { path: "/personal-tasks", label: "Personal Tasks" },
-    { path: "/group-tasks", label: "Group Tasks" },
-    { path: "/portfolio", label: "Portfolio" },
-    { path: "/brainstorm", label: "Brainstorm" },
-    { path: "/settings", label: "Settings" },
-  ];
 
   return (
     <div className="dashboard-layout flex h-screen">
