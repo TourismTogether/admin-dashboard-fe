@@ -3,7 +3,7 @@
 declare module "pako" {
   export function deflate(
     data: string | Uint8Array,
-    options?: { to?: "string" }
+    options?: { to?: "string" },
   ): Uint8Array;
 }
 

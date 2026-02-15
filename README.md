@@ -2,6 +2,8 @@
 
 React-based admin dashboard application for managing personal and group tasks.
 
+**Inspired by [OptimAI](https://optimai.network).**
+
 ## Prerequisites
 
 - Node.js 18+

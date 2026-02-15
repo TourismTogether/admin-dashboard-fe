@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -11,8 +11,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Wallet } from 'lucide-react';
+} from "@/components/ui/card";
+import { Wallet } from "lucide-react";
 import {
   registerStart,
   registerSuccess,
@@ -20,19 +20,19 @@ import {
   selectAuthLoading,
   selectAuthError,
   selectIsAuthenticated,
-} from '@/store/authSlice';
-import type { AppDispatch } from '@/store/store';
-import { API_URL } from '@/lib/api';
+} from "@/store/authSlice";
+import type { AppDispatch } from "@/store/store";
+import { API_URL } from "@/lib/api";
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [account, setAccount] = useState('');
-  const [nickname, setNickname] = useState('');
-  const [fullname, setFullname] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [account, setAccount] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [fullname, setFullname] = useState("");
 
   const isLoading = useSelector(selectAuthLoading);
   const error = useSelector(selectAuthError);
@@ -40,7 +40,7 @@ const RegisterPage: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/personal-tasks');
+      navigate("/personal-tasks");
     }
   }, [isAuthenticated, navigate]);
 
@@ -60,21 +60,24 @@ const RegisterPage: React.FC = () => {
           fullname: fullname || undefined,
         }),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || "Registration failed");
       }
-      
-      dispatch(registerSuccess({
-        token: data.access_token,
-        user: data.user,
-      }));
+
+      dispatch(
+        registerSuccess({
+          token: data.access_token,
+          user: data.user,
+        }),
+      );
     } catch (apiError) {
-      const errorMessage = (apiError instanceof Error && apiError.message) 
-        ? apiError.message 
-        : 'Registration failed. Please try again.';
+      const errorMessage =
+        apiError instanceof Error && apiError.message
+          ? apiError.message
+          : "Registration failed. Please try again.";
       dispatch(registerFailure(errorMessage));
     }
   };
@@ -101,7 +104,9 @@ const RegisterPage: React.FC = () => {
                 type="email"
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setEmail(e.target.value)
+                }
                 required
                 disabled={isLoading}
               />
@@ -113,7 +118,9 @@ const RegisterPage: React.FC = () => {
                 type="text"
                 placeholder="Enter your account name"
                 value={account}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAccount(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setAccount(e.target.value)
+                }
                 required
                 disabled={isLoading}
               />
@@ -125,12 +132,15 @@ const RegisterPage: React.FC = () => {
                 type="password"
                 placeholder="Enter your password"
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setPassword(e.target.value)
+                }
                 required
                 disabled={isLoading}
               />
               <p className="text-xs text-muted-foreground">
-                At least 8 characters, one uppercase, one lowercase, and one special character
+                At least 8 characters, one uppercase, one lowercase, and one
+                special character
               </p>
             </div>
             <div className="space-y-2">
@@ -140,7 +150,9 @@ const RegisterPage: React.FC = () => {
                 type="text"
                 placeholder="Enter your full name"
                 value={fullname}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFullname(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFullname(e.target.value)
+                }
                 disabled={isLoading}
               />
             </div>
@@ -151,22 +163,22 @@ const RegisterPage: React.FC = () => {
                 type="text"
                 placeholder="Enter your nickname"
                 value={nickname}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNickname(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setNickname(e.target.value)
+                }
                 disabled={isLoading}
               />
             </div>
             {error && (
-              <div className="text-sm text-red-500 font-medium">
-                {error}
-              </div>
+              <div className="text-sm text-red-500 font-medium">{error}</div>
             )}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Creating account...' : 'Sign up'}
+              {isLoading ? "Creating account..." : "Sign up"}
             </Button>
             <div className="text-sm text-center text-muted-foreground">
-              Already have an account?{' '}
+              Already have an account?{" "}
               <Link to="/login" className="text-primary hover:underline">
                 Sign in
               </Link>
