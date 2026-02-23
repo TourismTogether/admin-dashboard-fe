@@ -244,10 +244,8 @@ export const TablesList: React.FC<TablesListProps> = ({
   return (
     <div className="space-y-2">
       <h3 className="text-lg font-semibold">Your Tables ({tables.length})</h3>
-      <div className="border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto -mx-2 sm:mx-0">
-          <div className="inline-block min-w-full align-middle">
-            <Table>
+      <div className="w-full overflow-x-auto rounded-lg border">
+        <Table className="min-w-[520px]">
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
@@ -303,10 +301,8 @@ export const TablesList: React.FC<TablesListProps> = ({
               )}
             </TableBody>
           </Table>
-          </div>
-        </div>
       </div>
-      
+
       {/* Pagination */}
       {totalRows > pagination.pageSize && (
         <div className="flex items-center justify-between mt-4">

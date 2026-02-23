@@ -322,7 +322,7 @@ const BrainstormPage: React.FC = () => {
 
   const handleTypeChange = (t: string) => {
     setType(t);
-    if (!selected && DEFAULT_CONTENT[t]) {
+    if (DEFAULT_CONTENT[t]) {
       setContent(DEFAULT_CONTENT[t]);
     }
   };

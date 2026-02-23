@@ -168,10 +168,8 @@ export const GroupsList: React.FC<GroupsListProps> = ({
   return (
     <div className="space-y-2">
       <h3 className="text-lg font-semibold">Your Groups ({groups.length})</h3>
-      <div className="border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto -mx-2 sm:mx-0">
-          <div className="inline-block min-w-full align-middle">
-            <Table>
+      <div className="w-full overflow-x-auto rounded-lg border">
+        <Table className="min-w-[560px]">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
@@ -218,8 +216,6 @@ export const GroupsList: React.FC<GroupsListProps> = ({
                 )}
               </TableBody>
             </Table>
-          </div>
-        </div>
       </div>
       {totalRows > pagination.pageSize && (
         <div className="flex items-center justify-between mt-4">

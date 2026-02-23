@@ -35,8 +35,8 @@ export const TasksTable: React.FC<TasksTableProps> = ({
   onDeleteTask,
 }) => {
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <Table>
+    <div className="w-full overflow-x-auto rounded-lg border">
+      <Table className="min-w-[640px]">
         <TableHeader>
           <TableRow>
             <TableHead>Content</TableHead>

@@ -99,8 +99,8 @@ export const GroupTaskWeekTable: React.FC<GroupTaskWeekTableProps> = ({
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
+      <div className="w-full overflow-x-auto rounded-lg border">
+        <Table className="min-w-[800px]">
           <TableHeader>
             <TableRow>
               <TableHead className="w-[140px]">Priority</TableHead>

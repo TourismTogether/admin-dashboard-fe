@@ -114,9 +114,27 @@
   border-color: var(--color-border);
 }
 
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Responsive: prevent horizontal scroll and allow tables/cards to scroll */
+.dashboard-layout main {
+  min-width: 0;
+}
+
+/* Responsive containers */
+@media (max-width: 767px) {
+  .dashboard-layout main {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
 }

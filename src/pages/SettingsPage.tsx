@@ -234,8 +234,8 @@ const SettingsPage: React.FC = () => {
           ) : feedbackList.length === 0 ? (
             <p className="text-sm text-muted-foreground">No feedback yet.</p>
           ) : (
-            <div className="rounded-md border">
-              <Table>
+            <div className="w-full overflow-x-auto rounded-md border">
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Title</TableHead>

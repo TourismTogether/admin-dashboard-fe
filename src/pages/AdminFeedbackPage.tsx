@@ -146,8 +146,8 @@ const AdminFeedbackPage: React.FC = () => {
       ) : list.length === 0 ? (
         <p className="text-muted-foreground">No feedback yet.</p>
       ) : (
-        <div className="rounded-md border">
-          <Table>
+        <div className="w-full overflow-x-auto rounded-md border">
+          <Table className="min-w-[720px]">
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>

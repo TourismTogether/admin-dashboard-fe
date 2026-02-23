@@ -135,13 +135,13 @@ export const WeekTable: React.FC<WeekTableProps> = ({
         </Button>
       </div>
 
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
+      <div className="w-full overflow-x-auto rounded-lg border">
+        <Table className="min-w-[800px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[200px]">Swimlane</TableHead>
+              <TableHead className="w-[160px] sm:w-[200px]">Swimlane</TableHead>
               {weekDays.map((day, index) => (
-                <TableHead key={index} className="text-center">
+                <TableHead key={index} className="min-w-[100px] text-center sm:min-w-[120px]">
                   {format(day, "EEE")}
                   <br />
                   <span className="text-xs text-muted-foreground">
