@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, Square, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -17,7 +17,8 @@ export const PomodoroTimer: React.FC = () => {
   const [customBreak, setCustomBreak] = useState(5);
   const [isCustomWorking, setIsCustomWorking] = useState(false);
   const [isCustomBreak, setIsCustomBreak] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const endTimeRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initialize audio for notification sound (created on demand in playNotificationSound)
@@ -47,56 +48,86 @@ export const PomodoroTimer: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (timerState === "running") {
-      intervalRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            // Timer finished
-            handleTimerComplete();
-            return 0;
-          }
-          return prev - 1;
+  const handleTimerComplete = useCallback(() => {
+    endTimeRef.current = null;
+    setTimerState("idle");
+    playNotificationSound();
+    setMode((m) => {
+      if (m === "working") {
+        toast.success("Working session completed! Time for a break.", {
+          duration: 5000,
         });
-      }, 1000);
+        return "break";
+      }
+      toast.success("Break completed! Ready to work again.", {
+        duration: 5000,
+      });
+      return "working";
+    });
+    setIsCustomWorking(false);
+    setIsCustomBreak(false);
+  }, []);
+
+  // After completion we need to set timeLeft for the next phase (break or work). Do it in an effect that runs when we go idle and mode has changed.
+  const prevModeRef = useRef<TimerMode>(mode);
+  useEffect(() => {
+    if (timerState === "idle" && prevModeRef.current !== mode) {
+      prevModeRef.current = mode;
+      if (mode === "break") {
+        const breakTime = isCustomBreak ? customBreak : BREAK_PRESETS[0];
+        setTimeLeft(breakTime * 60);
+      } else {
+        const workTime = isCustomWorking ? customWorking : WORKING_PRESETS[0];
+        setTimeLeft(workTime * 60);
+      }
     } else {
+      prevModeRef.current = mode;
+    }
+  }, [timerState, mode, isCustomWorking, isCustomBreak, customWorking, customBreak]);
+
+  // Timestamp-based tick: compute remaining from endTime so timer stays correct when tab is backgrounded (browsers throttle setInterval).
+  useEffect(() => {
+    if (timerState !== "running") {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      if (timerState === "paused" && endTimeRef.current != null) {
+        const remaining = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000));
+        setTimeLeft(remaining);
+        endTimeRef.current = null;
+      }
+      return;
     }
+
+    if (endTimeRef.current == null) {
+      endTimeRef.current = Date.now() + timeLeft * 1000;
+    }
+
+    const tick = () => {
+      if (endTimeRef.current == null) return;
+      const remaining = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      if (remaining <= 0) {
+        endTimeRef.current = null;
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        handleTimerComplete();
+      }
+    };
+
+    tick(); // run once immediately so UI updates
+    intervalRef.current = setInterval(tick, 500); // update every 500ms for smoother display; actual end time is from ref
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
-  }, [timerState]);
-
-  const handleTimerComplete = () => {
-    setTimerState("idle");
-    playNotificationSound();
-    
-    if (mode === "working") {
-      toast.success("Working session completed! Time for a break.", {
-        duration: 5000,
-      });
-      // Switch to break mode
-      const breakTime = isCustomBreak ? customBreak : BREAK_PRESETS[0];
-      setTimeLeft(breakTime * 60);
-      setMode("break");
-      setIsCustomWorking(false);
-    } else {
-      toast.success("Break completed! Ready to work again.", {
-        duration: 5000,
-      });
-      // Switch to working mode
-      const workTime = isCustomWorking ? customWorking : WORKING_PRESETS[0];
-      setTimeLeft(workTime * 60);
-      setMode("working");
-      setIsCustomBreak(false);
-    }
-  };
+  }, [timerState, handleTimerComplete]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
