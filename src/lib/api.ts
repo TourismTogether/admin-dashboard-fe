@@ -10,11 +10,16 @@ export async function apiRequest(
   options: RequestInit = {}
 ): Promise<Response> {
   const token = selectAuthToken(store.getState());
-  
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string> || {}),
-  };
+
+  const rawHeaders = (options.headers as Record<string, string | undefined>) || {};
+  const headers: Record<string, string> = {};
+  for (const [k, v] of Object.entries(rawHeaders)) {
+    if (v != null && v !== "") headers[k] = String(v);
+  }
+  // Only set Content-Type for requests with a body so GET/HEAD don't trigger body parsing
+  if (options.body !== undefined && options.body !== null) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;

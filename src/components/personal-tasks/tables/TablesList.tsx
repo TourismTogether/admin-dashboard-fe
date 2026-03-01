@@ -20,7 +20,7 @@ import {
   SortingState,
   PaginationState,
 } from "@tanstack/react-table";
-import { Trash2, ArrowDown, ArrowUp, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, ArrowDown, ArrowUp, Pencil, Share2, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface TableWeek {
   tableId: string;
@@ -38,6 +38,7 @@ interface TablesListProps {
   onSelectTable: (tableId: string) => void;
   onDeleteTable?: (tableId: string) => void;
   onEditTable?: (table: TableWeek) => void;
+  onShareTable?: (table: TableWeek) => void;
 }
 
 const columnHelper = createColumnHelper<TableWeek>();
@@ -48,6 +49,7 @@ export const TablesList: React.FC<TablesListProps> = ({
   onSelectTable,
   onDeleteTable,
   onEditTable,
+  onShareTable,
 }) => {
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "week", desc: true },
@@ -68,6 +70,13 @@ export const TablesList: React.FC<TablesListProps> = ({
     e.stopPropagation();
     if (onEditTable) {
       onEditTable(table);
+    }
+  };
+
+  const handleShare = (e: React.MouseEvent, table: TableWeek) => {
+    e.stopPropagation();
+    if (onShareTable) {
+      onShareTable(table);
     }
   };
 
@@ -184,14 +193,25 @@ export const TablesList: React.FC<TablesListProps> = ({
         ),
         size: 150,
       }),
-      ...(onDeleteTable || onEditTable
+      ...(onDeleteTable || onEditTable || onShareTable
         ? [
             columnHelper.display({
               id: "actions",
               header: () => <div className="text-right">Actions</div>,
-              size: 120,
+              size: 140,
               cell: ({ row }) => (
                 <div className="flex items-center justify-end gap-1">
+                  {onShareTable && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => handleShare(e, row.original)}
+                      className="h-8 px-2 sm:px-3 hover:bg-primary/10"
+                      title="Share"
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </Button>
+                  )}
                   {onEditTable && (
                     <Button
                       variant="ghost"
@@ -218,7 +238,7 @@ export const TablesList: React.FC<TablesListProps> = ({
           ]
         : []),
     ],
-    [onDeleteTable, onEditTable]
+    [onDeleteTable, onEditTable, onShareTable]
   );
 
   const table = useReactTable({

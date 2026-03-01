@@ -21,6 +21,7 @@ import SelfStudyPage from "./pages/SelfStudyPage";
 import SettingsPage from "./pages/SettingsPage";
 import BrainstormPage from "./pages/BrainstormPage";
 import AdminFeedbackPage from "./pages/AdminFeedbackPage";
+import ShareTablePage from "./pages/ShareTablePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -115,6 +116,21 @@ const router = createBrowserRouter([
           {
             index: true,
             element: <Navigate to="/personal-tasks" replace />,
+          },
+        ],
+      },
+      // Share table page (same sidebar layout; login required)
+      {
+        path: "share",
+        element: (
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            path: "table/:shareId",
+            element: <ShareTablePage />,
           },
         ],
       },

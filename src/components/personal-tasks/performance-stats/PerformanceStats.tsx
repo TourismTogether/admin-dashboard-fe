@@ -336,9 +336,10 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
                     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                   }}
                   labelStyle={{ color: "#1f2937", fontWeight: 600 }}
-                  formatter={(value: number | undefined, name: string) => {
-                    if (name === "Completion Rate (%)") return [`${value ?? 0}%`, name];
-                    return [value ?? 0, name];
+                  formatter={(value: number | undefined, name: string | undefined) => {
+                    const label = name ?? "";
+                    if (label === "Completion Rate (%)") return [`${value ?? 0}%`, label];
+                    return [value ?? 0, label];
                   }}
                 />
                 <Legend />

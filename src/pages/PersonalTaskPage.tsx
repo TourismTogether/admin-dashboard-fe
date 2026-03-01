@@ -21,6 +21,7 @@ import {
   type SwimlaneEditPayload,
 } from "@/components/personal-tasks/tables/WeekTable";
 import { DeleteTableDialog } from "@/components/personal-tasks/dialogs/DeleteTableDialog";
+import { ShareTableDialog } from "@/components/personal-tasks/dialogs/ShareTableDialog";
 import { DeleteSwimlaneDialog } from "@/components/personal-tasks/dialogs/DeleteSwimlaneDialog";
 import { DeleteTaskDialog } from "@/components/personal-tasks/dialogs/DeleteTaskDialog";
 import { TaskSummaryTables } from "@/components/personal-tasks/task-summary/TaskSummaryTables";
@@ -77,6 +78,8 @@ const PersonalTaskPage: React.FC = () => {
   );
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [isDeleteTableOpen, setIsDeleteTableOpen] = useState(false);
+  const [isShareTableOpen, setIsShareTableOpen] = useState(false);
+  const [sharingTable, setSharingTable] = useState<TableWeek | null>(null);
   const [isDeleteSwimlaneOpen, setIsDeleteSwimlaneOpen] = useState(false);
   const [isDeleteTaskOpen, setIsDeleteTaskOpen] = useState(false);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
@@ -515,6 +518,11 @@ const PersonalTaskPage: React.FC = () => {
     setIsEditTableOpen(true);
   };
 
+  const handleShareTable = (table: TableWeek) => {
+    setSharingTable(table);
+    setIsShareTableOpen(true);
+  };
+
   const handleUpdateTable = (
     tableId: string,
     startDate: string,
@@ -882,6 +890,7 @@ const PersonalTaskPage: React.FC = () => {
         onSelectTable={setSelectedTableId}
         onDeleteTable={handleDeleteTable}
         onEditTable={handleEditTable}
+        onShareTable={handleShareTable}
       />
 
       {tableData?.data && (
@@ -941,6 +950,12 @@ const PersonalTaskPage: React.FC = () => {
               }
             : undefined
         }
+      />
+
+      <ShareTableDialog
+        open={isShareTableOpen}
+        onOpenChange={setIsShareTableOpen}
+        table={sharingTable}
       />
 
       <EditSwimlaneDialog
