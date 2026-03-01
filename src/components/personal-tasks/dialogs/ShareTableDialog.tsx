@@ -10,7 +10,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Share2, Copy, Loader2 } from "lucide-react";
+import { Share2, Copy, Loader2, Check } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -39,6 +39,7 @@ export const ShareTableDialog: React.FC<ShareTableDialogProps> = ({
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!open || !table) return;
@@ -56,7 +57,9 @@ export const ShareTableDialog: React.FC<ShareTableDialogProps> = ({
       .then((data) => {
         if (data?.data) {
           setIsPublic(data.data.isPublic);
-          setShareUrl(data.data.shareUrl ?? null);
+          // Build URL from current origin so it works in dev/staging/prod
+          const shareId = data.data.shareId;
+          setShareUrl(shareId ? `${window.location.origin}/share/table/${shareId}` : null);
         }
       })
       .catch(() => {
@@ -78,7 +81,8 @@ export const ShareTableDialog: React.FC<ShareTableDialogProps> = ({
         if (!res.ok) throw new Error("Failed to create share");
         const data = await res.json();
         setIsPublic(true);
-        setShareUrl(data.data?.shareUrl ?? null);
+        const shareId = data.data?.shareId;
+        setShareUrl(shareId ? `${window.location.origin}/share/table/${shareId}` : null);
         toast.success("Share link created");
       } else {
         const res = await apiRequest(`/api/personal-tasks/tables/${table.tableId}/share`, {
@@ -99,7 +103,9 @@ export const ShareTableDialog: React.FC<ShareTableDialogProps> = ({
   const copyLink = () => {
     if (!shareUrl) return;
     navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
     toast.success("Link copied to clipboard");
+    setTimeout(() => setCopied(false), 1000);
   };
 
   return (
@@ -141,7 +147,11 @@ export const ShareTableDialog: React.FC<ShareTableDialogProps> = ({
             <div className="flex gap-2">
               <Input readOnly value={shareUrl} className="font-mono text-sm" />
               <Button variant="outline" size="icon" onClick={copyLink} title="Copy link">
-                <Copy className="h-4 w-4" />
+                {copied ? (
+                  <Check className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
               </Button>
             </div>
           )}
