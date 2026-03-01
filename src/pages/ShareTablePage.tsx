@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, addDays, parseISO } from "date-fns";
@@ -101,6 +101,16 @@ const ShareTablePage: React.FC = () => {
   const isOwner = shareData?.data?.isOwner ?? false;
   const canEdit = isOwner || !!forkedTableId;
   const effectiveTableId = tableData?.tableId ?? null;
+  const forkButtonRef = useRef<HTMLButtonElement>(null);
+
+  const requireFork = useCallback(() => {
+    if (canEdit) return false;
+    toast.info("Copy this table to your account first to make changes.", {
+      description: "Click \"Copy to my tables\" above.",
+    });
+    forkButtonRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return true;
+  }, [canEdit]);
 
   const forkMutation = useMutation({
     mutationFn: async () => {
@@ -240,13 +250,13 @@ const ShareTablePage: React.FC = () => {
   });
 
   const handleAddTask = (swimlaneId: string, dayIndex: number) => {
-    if (!canEdit) return;
+    if (requireFork()) return;
     setEditingTask({ task: null, swimlaneId, dayIndex });
     setIsTaskDialogOpen(true);
   };
 
   const handleEditTask = (task: Task, swimlaneId: string, dayIndex: number) => {
-    if (!canEdit) return;
+    if (requireFork()) return;
     setEditingTask({ task, swimlaneId, dayIndex });
     setIsTaskDialogOpen(true);
   };
@@ -272,7 +282,7 @@ const ShareTablePage: React.FC = () => {
     detail?: string,
     checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null
   ) => {
-    if (!editingTask) return;
+    if (!editingTask || requireFork()) return;
     const detailVal = detail?.trim() || null;
     if (editingTask.task) {
       updateTaskMutation.mutate({
@@ -297,6 +307,7 @@ const ShareTablePage: React.FC = () => {
   };
 
   const handleDeleteSwimlane = (swimlaneId: string) => {
+    if (requireFork()) return;
     const sl = tableData?.swimlanes?.find((s) => s.swimlaneId === swimlaneId);
     if (sl) {
       setSwimlaneToDelete({ swimlaneId, name: sl.content });
@@ -305,6 +316,7 @@ const ShareTablePage: React.FC = () => {
   };
 
   const handleEditSwimlane = (payload: SwimlaneEditPayload) => {
+    if (requireFork()) return;
     setSwimlaneToEdit({
       swimlaneId: payload.swimlaneId,
       content: payload.content,
@@ -322,6 +334,7 @@ const ShareTablePage: React.FC = () => {
   };
 
   const handleDeleteTask = (taskId: string, content: string) => {
+    if (requireFork()) return;
     setTaskToDelete({ taskId, content });
     setIsDeleteTaskOpen(true);
   };
@@ -343,6 +356,7 @@ const ShareTablePage: React.FC = () => {
     detail?: string,
     checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null
   ) => {
+    if (requireFork()) return;
     updateTaskMutation.mutate({
       taskId,
       content,
@@ -445,6 +459,7 @@ const ShareTablePage: React.FC = () => {
         <div className="flex items-center gap-2">
           {!canEdit && (
             <Button
+              ref={forkButtonRef}
               onClick={() => forkMutation.mutate()}
               disabled={forkMutation.isPending}
             >
@@ -482,7 +497,7 @@ const ShareTablePage: React.FC = () => {
         startDate={tableData.startDate}
         week={tableData.week}
         swimlanes={tableData.swimlanes}
-        onAddSwimlane={canEdit ? () => setIsCreateSwimlaneOpen(true) : () => {}}
+        onAddSwimlane={canEdit ? () => setIsCreateSwimlaneOpen(true) : () => requireFork()}
         onDeleteSwimlane={canEdit ? handleDeleteSwimlane : () => {}}
         onEditSwimlane={canEdit ? handleEditSwimlane : undefined}
         onAddTask={handleAddTask}
