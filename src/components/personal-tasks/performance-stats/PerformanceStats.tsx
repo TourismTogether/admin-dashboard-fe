@@ -308,11 +308,24 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
                   tickLine={false}
                   axisLine={false}
                 />
+                {/* Left Y-axis: Completion rate 0-100% */}
                 <YAxis 
+                  yAxisId="left"
+                  orientation="left"
                   tick={{ fontSize: 12 }}
                   tickLine={false}
                   axisLine={false}
                   domain={[0, 100]}
+                  tickFormatter={(v) => `${v}%`}
+                />
+                {/* Right Y-axis: Task counts */}
+                <YAxis 
+                  yAxisId="right"
+                  orientation="right"
+                  tick={{ fontSize: 12 }}
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
                 />
                 <Tooltip
                   contentStyle={{
@@ -323,10 +336,14 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
                     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                   }}
                   labelStyle={{ color: "#1f2937", fontWeight: 600 }}
-                  formatter={(value: number | undefined) => [`${value ?? 0}%`, "Completion Rate"]}
+                  formatter={(value: number | undefined, name: string) => {
+                    if (name === "Completion Rate (%)") return [`${value ?? 0}%`, name];
+                    return [value ?? 0, name];
+                  }}
                 />
                 <Legend />
                 <Line
+                  yAxisId="left"
                   type="monotone"
                   dataKey="completionRate"
                   stroke="#8b5cf6"
@@ -335,6 +352,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
                   name="Completion Rate (%)"
                 />
                 <Line
+                  yAxisId="right"
                   type="monotone"
                   dataKey="completed"
                   stroke="#22c55e"
@@ -343,6 +361,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
                   name="Completed Tasks"
                 />
                 <Line
+                  yAxisId="right"
                   type="monotone"
                   dataKey="total"
                   stroke="#94a3b8"
