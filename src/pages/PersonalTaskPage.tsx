@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { format, addDays, parseISO } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Filter, RefreshCw, BookOpen } from "lucide-react";
+import { Plus, Search, Filter, RefreshCw, BookOpen, CalendarDays, LayoutList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ import { ShareTableDialog } from "@/components/personal-tasks/dialogs/ShareTable
 import { DeleteSwimlaneDialog } from "@/components/personal-tasks/dialogs/DeleteSwimlaneDialog";
 import { DeleteTaskDialog } from "@/components/personal-tasks/dialogs/DeleteTaskDialog";
 import { TaskSummaryTables } from "@/components/personal-tasks/task-summary/TaskSummaryTables";
+import { TaskCalendarView } from "@/components/personal-tasks/task-summary/TaskCalendarView";
 import { TaskDetailDialog } from "@/components/personal-tasks/dialogs/TaskDetailDialog";
 import { PerformanceStats } from "@/components/personal-tasks/performance-stats/PerformanceStats";
 
@@ -102,6 +103,8 @@ const PersonalTaskPage: React.FC = () => {
     swimlaneId: string;
     dayIndex: number;
   } | null>(null);
+  const [tasksViewMode, setTasksViewMode] = useState<"table" | "calendar">("table");
+  const [addTaskPresetDate, setAddTaskPresetDate] = useState<string | null>(null);
 
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -194,7 +197,9 @@ const PersonalTaskPage: React.FC = () => {
   // const handleSendEmail = () => { ... };
 
   // Fetch selected table with swimlanes and tasks
-  const { data: tableData } = useQuery<{ data: TableWithSwimlanes }>({
+  const { data: tableData, isFetching: isFetchingTableData } = useQuery<{
+    data: TableWithSwimlanes;
+  }>({
     queryKey: ["personal-tasks", "table", selectedTableId],
     queryFn: async () => {
       if (!selectedTableId) return null;
@@ -206,6 +211,45 @@ const PersonalTaskPage: React.FC = () => {
     },
     enabled: !!selectedTableId,
   });
+
+  // Fetch all tables with swimlanes and tasks for calendar view (month overview)
+  const {
+    data: allTablesWithSwimlanes,
+    isFetching: isFetchingAllTables,
+  } = useQuery<TableWithSwimlanes[]>({
+    queryKey: ["personal-tasks", "tables-with-swimlanes"],
+    queryFn: async () => {
+      if (!tablesData?.data?.length) return [];
+      const results = await Promise.all(
+        tablesData.data.map(async (table) => {
+          const response = await apiRequest(
+            `/api/personal-tasks/tables/${table.tableId}`
+          );
+          if (!response.ok) {
+            throw new Error("Failed to fetch table");
+          }
+          const json = await response.json();
+          return json.data as TableWithSwimlanes;
+        })
+      );
+      return results;
+    },
+    enabled: tasksViewMode === "calendar" && !!tablesData?.data?.length,
+  });
+
+  // Swimlanes for calendar view: aggregate across all tables
+  const calendarSwimlanes = useMemo(() => {
+    if (allTablesWithSwimlanes?.length) {
+      return allTablesWithSwimlanes.flatMap((table) => table.swimlanes);
+    }
+    return tableData?.data?.swimlanes ?? [];
+  }, [allTablesWithSwimlanes, tableData?.data?.swimlanes]);
+
+  const hasCurrentTable = !!tableData?.data;
+
+  const isViewLoading =
+    (tasksViewMode === "table" && isFetchingTableData && hasCurrentTable) ||
+    (tasksViewMode === "calendar" && isFetchingAllTables);
 
   // Create table mutation
   const createTableMutation = useMutation({
@@ -571,8 +615,25 @@ const PersonalTaskPage: React.FC = () => {
   };
 
   const handleAddTask = (swimlaneId: string, dayIndex: number) => {
+    setAddTaskPresetDate(null);
     setEditingTask({ task: null, swimlaneId, dayIndex });
     setIsTaskDialogOpen(true);
+  };
+
+  const handleAddTaskForDate = (date: string) => {
+    if (!tableData?.data?.swimlanes?.length) return;
+    setAddTaskPresetDate(date);
+    setEditingTask({
+      task: null,
+      swimlaneId: tableData.data.swimlanes[0].swimlaneId,
+      dayIndex: 0,
+    });
+    setIsTaskDialogOpen(true);
+  };
+
+  const handleTaskDialogOpenChange = (open: boolean) => {
+    if (!open) setAddTaskPresetDate(null);
+    setIsTaskDialogOpen(open);
   };
 
   const handleEditTask = (task: Task, swimlaneId: string, dayIndex: number) => {
@@ -747,8 +808,9 @@ const PersonalTaskPage: React.FC = () => {
     });
   };
 
-  // Get task date for dialog
+  // Get task date for dialog (use preset when adding from calendar)
   const getTaskDate = (): string => {
+    if (addTaskPresetDate) return addTaskPresetDate;
     if (!editingTask || !tableData?.data) return "";
     // Parse startDate as a date string (YYYY-MM-DD) without timezone issues
     const startDateStr = tableData.data.startDate;
@@ -772,6 +834,42 @@ const PersonalTaskPage: React.FC = () => {
     const targetDate = addDays(startDate, editingTask.dayIndex);
     return format(targetDate, "yyyy-MM-dd");
   };
+
+  const isInitialLoading = isLoadingTables && !(tablesData && "data" in tablesData);
+
+  if (isInitialLoading) {
+    return (
+      <div className="p-2 sm:p-4 md:p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <div className="h-7 w-40 bg-muted rounded animate-pulse" />
+          <div className="flex items-center gap-2">
+            <div className="h-9 w-9 bg-muted rounded-md animate-pulse" />
+            <div className="h-9 w-24 bg-muted rounded-md animate-pulse" />
+            <div className="h-9 w-32 bg-muted rounded-md animate-pulse" />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="h-10 bg-muted rounded-md animate-pulse" />
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="h-9 bg-muted rounded-md flex-1 animate-pulse" />
+            <div className="h-9 bg-muted rounded-md flex-1 animate-pulse" />
+            <div className="h-9 bg-muted rounded-md flex-1 animate-pulse" />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="h-6 w-48 bg-muted rounded-md animate-pulse" />
+          <div className="h-40 bg-muted rounded-md animate-pulse" />
+        </div>
+
+        <div className="space-y-3">
+          <div className="h-6 w-40 bg-muted rounded-md animate-pulse" />
+          <div className="h-64 bg-muted rounded-md animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-2 sm:p-4 md:p-6 space-y-4">
@@ -884,48 +982,108 @@ const PersonalTaskPage: React.FC = () => {
         isLoading={updateTableMutation.isPending}
       />
 
-      <TablesList
-        tables={filteredTables}
-        selectedTableId={selectedTableId}
-        onSelectTable={setSelectedTableId}
-        onDeleteTable={handleDeleteTable}
-        onEditTable={handleEditTable}
-        onShareTable={handleShareTable}
-      />
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-lg font-semibold">
+            {tasksViewMode === "table"
+              ? `Your Tables (${filteredTables.length})`
+              : "Your Calendar"}
+          </h3>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground"
+            onClick={() =>
+              setTasksViewMode((m) => (m === "table" ? "calendar" : "table"))
+            }
+          >
+            {tasksViewMode === "table" ? (
+              <>
+                <CalendarDays className="h-4 w-4" />
+                <span>Calendar View</span>
+              </>
+            ) : (
+              <>
+                <LayoutList className="h-4 w-4" />
+                <span>Table View</span>
+              </>
+            )}
+          </Button>
+        </div>
+        {tasksViewMode === "table" && (
+          <TablesList
+            tables={filteredTables}
+            selectedTableId={selectedTableId}
+            onSelectTable={setSelectedTableId}
+            onDeleteTable={handleDeleteTable}
+            onEditTable={handleEditTable}
+            onShareTable={handleShareTable}
+          />
+        )}
+      </div>
 
-      {tableData?.data && (
+      {(hasCurrentTable ||
+        (tasksViewMode === "calendar" &&
+          (calendarSwimlanes.length > 0 || isViewLoading))) && (
         <>
-          <WeekTable
-            startDate={tableData.data.startDate}
-            week={tableData.data.week}
-            swimlanes={tableData.data.swimlanes}
-            onAddSwimlane={() => setIsCreateSwimlaneOpen(true)}
-            onDeleteSwimlane={handleDeleteSwimlane}
-            onEditSwimlane={handleEditSwimlane}
-            onAddTask={handleAddTask}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-            onMoveTask={handleMoveTask}
-            onCopyTask={handleCopyTask}
-          />
+          {hasCurrentTable && (
+            <CreateSwimlaneDialog
+              open={isCreateSwimlaneOpen}
+              onOpenChange={setIsCreateSwimlaneOpen}
+              onCreate={handleCreateSwimlane}
+              isLoading={createSwimlaneMutation.isPending}
+            />
+          )}
 
-          <CreateSwimlaneDialog
-            open={isCreateSwimlaneOpen}
-            onOpenChange={setIsCreateSwimlaneOpen}
-            onCreate={handleCreateSwimlane}
-            isLoading={createSwimlaneMutation.isPending}
-          />
+          {/* Tasks / Calendar section */}
+          <div className="space-y-4">
+            {tasksViewMode === "table" && (
+              <h3 className="text-lg font-semibold">Your Tasks</h3>
+            )}
 
-          <TaskSummaryTables
-            swimlanes={tableData.data.swimlanes}
-            onViewTask={handleViewTask}
-            onDeleteTask={handleDeleteTask}
-          />
+            {isViewLoading ? (
+              <div className="space-y-3">
+                <div className="h-6 w-32 bg-muted rounded-md animate-pulse" />
+                <div className="h-40 bg-muted rounded-md animate-pulse" />
+                <div className="h-64 bg-muted rounded-md animate-pulse" />
+              </div>
+            ) : tasksViewMode === "table" && hasCurrentTable ? (
+              <>
+                <WeekTable
+                  startDate={tableData.data.startDate}
+                  week={tableData.data.week}
+                  swimlanes={tableData.data.swimlanes}
+                  onAddSwimlane={() => setIsCreateSwimlaneOpen(true)}
+                  onDeleteSwimlane={handleDeleteSwimlane}
+                  onEditSwimlane={handleEditSwimlane}
+                  onAddTask={handleAddTask}
+                  onEditTask={handleEditTask}
+                  onDeleteTask={handleDeleteTask}
+                  onMoveTask={handleMoveTask}
+                  onCopyTask={handleCopyTask}
+                />
+                <TaskSummaryTables
+                  swimlanes={tableData.data.swimlanes}
+                  onViewTask={handleViewTask}
+                  onDeleteTask={handleDeleteTask}
+                />
+              </>
+            ) : (
+              <TaskCalendarView
+                swimlanes={calendarSwimlanes}
+                onViewTask={handleViewTask}
+                onDeleteTask={handleDeleteTask}
+                onAddTaskForDate={handleAddTaskForDate}
+              />
+            )}
 
-          <PerformanceStats
-            swimlanes={tableData.data.swimlanes}
-            startDate={tableData.data.startDate}
-          />
+            {tasksViewMode === "table" && hasCurrentTable && (
+              <PerformanceStats
+                swimlanes={tableData.data.swimlanes}
+                startDate={tableData.data.startDate}
+              />
+            )}
+          </div>
         </>
       )}
 
@@ -933,7 +1091,7 @@ const PersonalTaskPage: React.FC = () => {
         task={editingTask?.task || null}
         taskDate={getTaskDate()}
         open={isTaskDialogOpen}
-        onOpenChange={setIsTaskDialogOpen}
+        onOpenChange={handleTaskDialogOpenChange}
         onSave={handleSaveTask}
       />
 

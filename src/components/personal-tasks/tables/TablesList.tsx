@@ -263,7 +263,6 @@ export const TablesList: React.FC<TablesListProps> = ({
 
   return (
     <div className="space-y-2">
-      <h3 className="text-lg font-semibold">Your Tables ({tables.length})</h3>
       <div className="w-full overflow-x-auto rounded-lg border">
         <Table className="min-w-[520px]">
             <TableHeader>

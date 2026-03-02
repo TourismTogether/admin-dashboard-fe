@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -112,6 +113,16 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {taskDate && (
+            <div className="space-y-2">
+              <Label>Due date</Label>
+              <Input
+                value={format(parseISO(taskDate), "MMM d, yyyy")}
+                readOnly
+                className="bg-muted"
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="task-content">Content</Label>
             <Input

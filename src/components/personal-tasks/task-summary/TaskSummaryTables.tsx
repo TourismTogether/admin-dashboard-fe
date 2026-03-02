@@ -84,54 +84,56 @@ export const TaskSummaryTables: React.FC<TaskSummaryTablesProps> = ({
 
       {/* Tab Content */}
       {activeTab === "incomplete" && (
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold">
-            Incomplete Tasks ({incompleteTasks.length})
-          </h3>
-          <TasksTable
-            tasks={paginatedIncompleteTasks}
-            swimlanes={swimlanes}
-            emptyMessage="No incomplete tasks."
-            onViewTask={onViewTask}
-            onDeleteTask={onDeleteTask}
-          />
-          {incompleteTasks.length > PAGE_SIZE && (
-            <Pagination
-              currentPage={incompletePage}
-              totalPages={incompleteTotalPages}
-              totalItems={incompleteTasks.length}
-              pageSize={PAGE_SIZE}
-              startIndex={incompleteStartIndex}
-              endIndex={incompleteEndIndex}
-              onPageChange={setIncompletePage}
-            />
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">
+                Incomplete Tasks ({incompleteTasks.length})
+              </h3>
+              <TasksTable
+                tasks={paginatedIncompleteTasks}
+                swimlanes={swimlanes}
+                emptyMessage="No incomplete tasks."
+                onViewTask={onViewTask}
+                onDeleteTask={onDeleteTask}
+              />
+              {incompleteTasks.length > PAGE_SIZE && (
+                <Pagination
+                  currentPage={incompletePage}
+                  totalPages={incompleteTotalPages}
+                  totalItems={incompleteTasks.length}
+                  pageSize={PAGE_SIZE}
+                  startIndex={incompleteStartIndex}
+                  endIndex={incompleteEndIndex}
+                  onPageChange={setIncompletePage}
+                />
+              )}
+            </div>
           )}
-        </div>
-      )}
 
-      {activeTab === "done" && (
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold">Done Tasks ({doneTasks.length})</h3>
-          <TasksTable
-            tasks={paginatedDoneTasks}
-            swimlanes={swimlanes}
-            emptyMessage="No completed tasks yet."
-            onViewTask={onViewTask}
-            onDeleteTask={onDeleteTask}
-          />
-          {doneTasks.length > PAGE_SIZE && (
-            <Pagination
-              currentPage={donePage}
-              totalPages={doneTotalPages}
-              totalItems={doneTasks.length}
-              pageSize={PAGE_SIZE}
-              startIndex={doneStartIndex}
-              endIndex={doneEndIndex}
-              onPageChange={setDonePage}
-            />
+          {activeTab === "done" && (
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">
+                Done Tasks ({doneTasks.length})
+              </h3>
+              <TasksTable
+                tasks={paginatedDoneTasks}
+                swimlanes={swimlanes}
+                emptyMessage="No completed tasks yet."
+                onViewTask={onViewTask}
+                onDeleteTask={onDeleteTask}
+              />
+              {doneTasks.length > PAGE_SIZE && (
+                <Pagination
+                  currentPage={donePage}
+                  totalPages={doneTotalPages}
+                  totalItems={doneTasks.length}
+                  pageSize={PAGE_SIZE}
+                  startIndex={doneStartIndex}
+                  endIndex={doneEndIndex}
+                  onPageChange={setDonePage}
+                />
+              )}
+            </div>
           )}
-        </div>
-      )}
 
       {activeTab === "kanban" && (
         <KanbanBoard
