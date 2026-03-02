@@ -449,6 +449,9 @@ const PersonalTaskPage: React.FC = () => {
       queryClient.invalidateQueries({
         queryKey: ["personal-tasks", "table", selectedTableId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["personal-tasks", "tables-with-swimlanes"],
+      });
       setIsTaskDialogOpen(false);
       setEditingTask(null);
       toast.success("Task created successfully");
@@ -488,6 +491,9 @@ const PersonalTaskPage: React.FC = () => {
       queryClient.invalidateQueries({
         queryKey: ["personal-tasks", "table", selectedTableId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["personal-tasks", "tables-with-swimlanes"],
+      });
       setIsTaskDialogOpen(false);
       setIsTaskDetailOpen(false);
       setEditingTask(null);
@@ -511,6 +517,9 @@ const PersonalTaskPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["personal-tasks", "table", selectedTableId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["personal-tasks", "tables-with-swimlanes"],
       });
       setIsDeleteTaskOpen(false);
       setTaskToDelete(null);
@@ -541,6 +550,9 @@ const PersonalTaskPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["personal-tasks", "table", selectedTableId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["personal-tasks", "tables-with-swimlanes"],
       });
       toast.success("Task copied successfully");
     },
@@ -621,14 +633,74 @@ const PersonalTaskPage: React.FC = () => {
   };
 
   const handleAddTaskForDate = (date: string) => {
-    if (!tableData?.data?.swimlanes?.length) return;
-    setAddTaskPresetDate(date);
-    setEditingTask({
-      task: null,
-      swimlaneId: tableData.data.swimlanes[0].swimlaneId,
-      dayIndex: 0,
-    });
-    setIsTaskDialogOpen(true);
+    let targetTable: TableWithSwimlanes | null = null;
+    let dayIndex = 0;
+
+    try {
+      const clickedDate = parseISO(date);
+
+      const parseStart = (startDateStr: string): Date | null => {
+        try {
+          if (startDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            const [year, month, day] = startDateStr.split("-").map(Number);
+            return new Date(year, month - 1, day);
+          }
+          const parsed = parseISO(startDateStr);
+          return new Date(
+            parsed.getFullYear(),
+            parsed.getMonth(),
+            parsed.getDate()
+          );
+        } catch {
+          return null;
+        }
+      };
+
+      if (allTablesWithSwimlanes?.length) {
+        for (const table of allTablesWithSwimlanes) {
+          const start = parseStart(table.startDate);
+          if (!start) continue;
+          const end = addDays(start, 6);
+          if (clickedDate >= start && clickedDate <= end) {
+            targetTable = table;
+            dayIndex = Math.floor(
+              (clickedDate.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)
+            );
+            break;
+          }
+        }
+      }
+
+      if (!targetTable && tableData?.data) {
+        const start = parseStart(tableData.data.startDate);
+        if (start) {
+          const end = addDays(start, 6);
+          if (clickedDate >= start && clickedDate <= end) {
+            targetTable = tableData.data;
+            dayIndex = Math.floor(
+              (clickedDate.getTime() - start.getTime()) / (24 * 60 * 60 * 1000)
+            );
+          }
+        }
+      }
+
+      if (!targetTable || !targetTable.swimlanes?.length) {
+        toast.error(
+          "No week table covers this date. Please create a table for this week first."
+        );
+        return;
+      }
+
+      setAddTaskPresetDate(date);
+      setEditingTask({
+        task: null,
+        swimlaneId: targetTable.swimlanes[0].swimlaneId,
+        dayIndex,
+      });
+      setIsTaskDialogOpen(true);
+    } catch {
+      toast.error("Invalid date for new task");
+    }
   };
 
   const handleTaskDialogOpenChange = (open: boolean) => {
