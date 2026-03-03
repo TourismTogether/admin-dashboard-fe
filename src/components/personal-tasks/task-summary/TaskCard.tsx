@@ -21,7 +21,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 }) => {
   return (
     <div
-      className="p-3 border rounded-lg bg-card hover:bg-accent cursor-pointer transition-colors space-y-2"
+      className={`p-3 border rounded-lg bg-card hover:bg-accent cursor-pointer transition-colors space-y-2 ${
+        task.isPending ? "opacity-70" : ""
+      }`}
       onClick={() => onViewTask(task)}
     >
       <div className="flex items-start justify-between gap-2">

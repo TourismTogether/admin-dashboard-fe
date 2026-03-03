@@ -197,7 +197,11 @@ const PersonalTaskPage: React.FC = () => {
   // const handleSendEmail = () => { ... };
 
   // Fetch selected table with swimlanes and tasks
-  const { data: tableData, isFetching: isFetchingTableData } = useQuery<{
+  const {
+    data: tableData,
+    isFetching: isFetchingTableData,
+    isLoading: isLoadingTableData,
+  } = useQuery<{
     data: TableWithSwimlanes;
   }>({
     queryKey: ["personal-tasks", "table", selectedTableId],
@@ -247,9 +251,17 @@ const PersonalTaskPage: React.FC = () => {
 
   const hasCurrentTable = !!tableData?.data;
 
+  // View loading skeletons:
+  // - Show only on first load (no data yet)
+  // - Keep existing data visible during background refetches (better UX for mutations)
+  const hasCalendarData = calendarSwimlanes.length > 0;
   const isViewLoading =
-    (tasksViewMode === "table" && isFetchingTableData && hasCurrentTable) ||
-    (tasksViewMode === "calendar" && isFetchingAllTables);
+    (tasksViewMode === "table" &&
+      !hasCurrentTable &&
+      (isLoadingTableData || isFetchingTableData)) ||
+    (tasksViewMode === "calendar" &&
+      !hasCalendarData &&
+      isFetchingAllTables);
 
   // Create table mutation
   const createTableMutation = useMutation({
@@ -445,19 +457,105 @@ const PersonalTaskPage: React.FC = () => {
       if (!response.ok) throw new Error("Failed to create task");
       return response.json();
     },
-    onSuccess: () => {
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({
+        queryKey: ["personal-tasks", "table", selectedTableId],
+      });
+      await queryClient.cancelQueries({
+        queryKey: ["personal-tasks", "tables-with-swimlanes"],
+      });
+
+      const previousTable = queryClient.getQueryData<{
+        data: TableWithSwimlanes;
+      }>(["personal-tasks", "table", selectedTableId]);
+
+      const previousAllTables =
+        queryClient.getQueryData<TableWithSwimlanes[] | undefined>([
+          "personal-tasks",
+          "tables-with-swimlanes",
+        ]);
+
+      const optimisticTaskId = `optimistic-${Date.now()}`;
+      const nowIso = new Date().toISOString();
+
+      const optimisticTask: Task = {
+        taskId: optimisticTaskId,
+        swimlaneId: variables.swimlaneId,
+        content: variables.content,
+        status: variables.status ?? "todo",
+        priority: variables.priority ?? "medium",
+        detail: variables.detail ?? undefined,
+        checklist: variables.checklist ?? undefined,
+        taskDate: variables.taskDate,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        isPending: true,
+      };
+
+      if (previousTable?.data) {
+        queryClient.setQueryData(
+          ["personal-tasks", "table", selectedTableId],
+          {
+            data: {
+              ...previousTable.data,
+              swimlanes: previousTable.data.swimlanes.map((swimlane) =>
+                swimlane.swimlaneId === variables.swimlaneId
+                  ? {
+                      ...swimlane,
+                      tasks: [...(swimlane.tasks ?? []), optimisticTask],
+                    }
+                  : swimlane
+              ),
+            },
+          }
+        );
+      }
+
+      if (previousAllTables) {
+        queryClient.setQueryData<TableWithSwimlanes[] | undefined>(
+          ["personal-tasks", "tables-with-swimlanes"],
+          previousAllTables.map((table) => ({
+            ...table,
+            swimlanes: table.swimlanes.map((swimlane) =>
+              swimlane.swimlaneId === variables.swimlaneId
+                ? {
+                    ...swimlane,
+                    tasks: [...(swimlane.tasks ?? []), optimisticTask],
+                  }
+                : swimlane
+            ),
+          }))
+        );
+      }
+
+      setIsTaskDialogOpen(false);
+      setEditingTask(null);
+
+      return { previousTable, previousAllTables };
+    },
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousTable) {
+        queryClient.setQueryData(
+          ["personal-tasks", "table", selectedTableId],
+          context.previousTable
+        );
+      }
+      if (context?.previousAllTables) {
+        queryClient.setQueryData(
+          ["personal-tasks", "tables-with-swimlanes"],
+          context.previousAllTables
+        );
+      }
+      toast.error(`Failed to create task: ${error.message}`);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: ["personal-tasks", "table", selectedTableId],
       });
       queryClient.invalidateQueries({
         queryKey: ["personal-tasks", "tables-with-swimlanes"],
       });
-      setIsTaskDialogOpen(false);
-      setEditingTask(null);
       toast.success("Task created successfully");
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to create task: ${error.message}`);
     },
   });
 
@@ -487,21 +585,101 @@ const PersonalTaskPage: React.FC = () => {
       if (!response.ok) throw new Error("Failed to update task");
       return response.json();
     },
-    onSuccess: () => {
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({
+        queryKey: ["personal-tasks", "table", selectedTableId],
+      });
+      await queryClient.cancelQueries({
+        queryKey: ["personal-tasks", "tables-with-swimlanes"],
+      });
+
+      const previousTable = queryClient.getQueryData<{
+        data: TableWithSwimlanes;
+      }>(["personal-tasks", "table", selectedTableId]);
+
+      const previousAllTables =
+        queryClient.getQueryData<TableWithSwimlanes[] | undefined>([
+          "personal-tasks",
+          "tables-with-swimlanes",
+        ]);
+
+      const applyUpdate = (task: Task): Task => {
+        if (task.taskId !== variables.taskId) return task;
+        return {
+          ...task,
+          content: variables.content ?? task.content,
+          status: variables.status ?? task.status,
+          priority: variables.priority ?? task.priority,
+          detail:
+            variables.detail !== undefined ? variables.detail : task.detail,
+          checklist:
+            variables.checklist !== undefined
+              ? variables.checklist ?? undefined
+              : task.checklist,
+          taskDate: variables.taskDate ?? task.taskDate,
+          swimlaneId: variables.swimlaneId ?? task.swimlaneId,
+          isPending: true,
+        };
+      };
+
+      if (previousTable?.data) {
+        queryClient.setQueryData(
+          ["personal-tasks", "table", selectedTableId],
+          {
+            data: {
+              ...previousTable.data,
+              swimlanes: previousTable.data.swimlanes.map((swimlane) => ({
+                ...swimlane,
+                tasks: swimlane.tasks?.map(applyUpdate),
+              })),
+            },
+          }
+        );
+      }
+
+      if (previousAllTables) {
+        queryClient.setQueryData<TableWithSwimlanes[] | undefined>(
+          ["personal-tasks", "tables-with-swimlanes"],
+          previousAllTables.map((table) => ({
+            ...table,
+            swimlanes: table.swimlanes.map((swimlane) => ({
+              ...swimlane,
+              tasks: swimlane.tasks?.map(applyUpdate),
+            })),
+          }))
+        );
+      }
+
+      setIsTaskDialogOpen(false);
+      setIsTaskDetailOpen(false);
+      setEditingTask(null);
+      setViewingTask(null);
+
+      return { previousTable, previousAllTables };
+    },
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousTable) {
+        queryClient.setQueryData(
+          ["personal-tasks", "table", selectedTableId],
+          context.previousTable
+        );
+      }
+      if (context?.previousAllTables) {
+        queryClient.setQueryData(
+          ["personal-tasks", "tables-with-swimlanes"],
+          context.previousAllTables
+        );
+      }
+      toast.error(`Failed to update task: ${error.message}`);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: ["personal-tasks", "table", selectedTableId],
       });
       queryClient.invalidateQueries({
         queryKey: ["personal-tasks", "tables-with-swimlanes"],
       });
-      setIsTaskDialogOpen(false);
-      setIsTaskDetailOpen(false);
-      setEditingTask(null);
-      setViewingTask(null);
       toast.success("Task updated successfully");
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to update task: ${error.message}`);
     },
   });
 
@@ -514,19 +692,84 @@ const PersonalTaskPage: React.FC = () => {
       if (!response.ok) throw new Error("Failed to delete task");
       return response.json();
     },
-    onSuccess: () => {
+    onMutate: async (taskId: string) => {
+      await queryClient.cancelQueries({
+        queryKey: ["personal-tasks", "table", selectedTableId],
+      });
+      await queryClient.cancelQueries({
+        queryKey: ["personal-tasks", "tables-with-swimlanes"],
+      });
+
+      const previousTable = queryClient.getQueryData<{
+        data: TableWithSwimlanes;
+      }>(["personal-tasks", "table", selectedTableId]);
+
+      const previousAllTables =
+        queryClient.getQueryData<TableWithSwimlanes[] | undefined>([
+          "personal-tasks",
+          "tables-with-swimlanes",
+        ]);
+
+      if (previousTable?.data) {
+        queryClient.setQueryData(
+          ["personal-tasks", "table", selectedTableId],
+          {
+            data: {
+              ...previousTable.data,
+              swimlanes: previousTable.data.swimlanes.map((swimlane) => ({
+                ...swimlane,
+                tasks: swimlane.tasks?.filter(
+                  (task) => task.taskId !== taskId
+                ),
+              })),
+            },
+          }
+        );
+      }
+
+      if (previousAllTables) {
+        queryClient.setQueryData<TableWithSwimlanes[] | undefined>(
+          ["personal-tasks", "tables-with-swimlanes"],
+          previousAllTables.map((table) => ({
+            ...table,
+            swimlanes: table.swimlanes.map((swimlane) => ({
+              ...swimlane,
+              tasks: swimlane.tasks?.filter(
+                (task) => task.taskId !== taskId
+              ),
+            })),
+          }))
+        );
+      }
+
+      setIsDeleteTaskOpen(false);
+      setTaskToDelete(null);
+
+      return { previousTable, previousAllTables };
+    },
+    onError: (error: Error, _taskId, context) => {
+      if (context?.previousTable) {
+        queryClient.setQueryData(
+          ["personal-tasks", "table", selectedTableId],
+          context.previousTable
+        );
+      }
+      if (context?.previousAllTables) {
+        queryClient.setQueryData(
+          ["personal-tasks", "tables-with-swimlanes"],
+          context.previousAllTables
+        );
+      }
+      toast.error(`Failed to delete task: ${error.message}`);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: ["personal-tasks", "table", selectedTableId],
       });
       queryClient.invalidateQueries({
         queryKey: ["personal-tasks", "tables-with-swimlanes"],
       });
-      setIsDeleteTaskOpen(false);
-      setTaskToDelete(null);
       toast.success("Task deleted successfully");
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to delete task: ${error.message}`);
     },
   });
 

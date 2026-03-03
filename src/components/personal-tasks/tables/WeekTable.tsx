@@ -375,9 +375,10 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                                 setDragOverSwimlaneId(null);
                               }}
                               className={cn(
-                                "p-2 border rounded bg-card hover:bg-accent cursor-pointer group/task",
+                                "p-2 border rounded bg-card hover:bg-accent cursor-pointer group/task transition-opacity",
                                 draggedTask?.taskId === task.taskId &&
-                                  "opacity-50"
+                                  "opacity-50",
+                                task.isPending && "opacity-70"
                               )}
                               onClick={() =>
                                 onEditTask(task, swimlane.swimlaneId, dayIndex)

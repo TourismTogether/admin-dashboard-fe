@@ -15,6 +15,8 @@ export interface Task {
   taskDate: string;
   createdAt: string;
   updatedAt: string;
+  /** UI-only flag for optimistic updates */
+  isPending?: boolean;
 }
 
 export interface Swimlane {

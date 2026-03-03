@@ -56,7 +56,10 @@ export const TasksTable: React.FC<TasksTableProps> = ({
             </TableRow>
           ) : (
             tasks.map((task) => (
-              <TableRow key={task.taskId}>
+              <TableRow
+                key={task.taskId}
+                className={task.isPending ? "opacity-70 transition-opacity" : ""}
+              >
                 <TableCell className="font-medium max-w-[300px] truncate" title={task.content}>
                   {task.content}
                 </TableCell>

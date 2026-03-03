@@ -310,7 +310,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                   key={`${weekIndex}-${dayIndex}`}
                   className={cn(
                     "flex flex-col min-w-0 border border-gray-100",
-                    "h-20 min-h-20 max-h-20 md:h-[110px] md:min-h-[110px] md:max-h-[110px] lg:h-[140px] lg:min-h-[140px] lg:max-h-[140px]",
+                    "h-16 min-h-16 max-h-16 md:h-[110px] md:min-h-[110px] md:max-h-[110px] lg:h-[140px] lg:min-h-[140px] lg:max-h-[140px]",
                     isToday && "bg-green-100",
                     isWeekend && "bg-gray-50/80"
                   )}
@@ -375,7 +375,10 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                         {dayTasks.slice(0, 3).map((task) => (
                           <div
                             key={task.taskId}
-                            className="flex items-center gap-0.5 shrink-0 group/task"
+                            className={cn(
+                              "flex items-center gap-0.5 shrink-0 group/task transition-opacity",
+                              task.isPending && "opacity-70"
+                            )}
                           >
                             <button
                               type="button"
@@ -387,12 +390,12 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                             >
                               <span className="sm:hidden flex items-center justify-center">
                                 <span
-                                className={cn(
-                                  "w-1 h-1 rounded-full shrink-0",
-                                  getPriorityDotColor(task.priority),
-                                  task.status === "done" && "opacity-50"
-                                )}
-                                title={task.content}
+                                  className={cn(
+                                    "w-1.5 h-1.5 rounded-full shrink-0",
+                                    getPriorityDotColor(task.priority),
+                                    task.status === "done" && "opacity-50"
+                                  )}
+                                  title={task.content}
                                 />
                               </span>
                               <Badge
@@ -425,8 +428,13 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                             <PopoverTrigger asChild>
                               <button
                                 type="button"
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-[10px] text-muted-foreground hover:text-foreground hover:underline text-left w-full shrink-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (window.innerWidth < 640) {
+                                    setMobileSheetDate(dateKey);
+                                  }
+                                }}
+                                className="text-[10px] text-muted-foreground hover:text-foreground text-left w-full shrink-0 px-1.5 py-0.5 rounded-full inline-flex items-center justify-center"
                               >
                                 +{dayTasks.length - 3} more
                               </button>
