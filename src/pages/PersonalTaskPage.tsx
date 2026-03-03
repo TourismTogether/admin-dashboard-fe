@@ -57,9 +57,16 @@ interface Task {
   status: string;
   priority: string;
   detail?: string;
+  checklist?: Array<{
+    id: string;
+    description: string;
+    isComplete: boolean;
+  }>;
   taskDate: string; // Required, not optional
   createdAt: string;
   updatedAt: string;
+  // UI-only flag used for optimistic updates
+  isPending?: boolean;
 }
 
 interface TableWithSwimlanes extends TableWeek {
@@ -605,17 +612,22 @@ const PersonalTaskPage: React.FC = () => {
 
       const applyUpdate = (task: Task): Task => {
         if (task.taskId !== variables.taskId) return task;
+        const nextDetail =
+          variables.detail !== undefined
+            ? variables.detail ?? undefined
+            : task.detail;
+        const nextChecklist =
+          variables.checklist !== undefined
+            ? variables.checklist ?? undefined
+            : task.checklist;
+
         return {
           ...task,
           content: variables.content ?? task.content,
           status: variables.status ?? task.status,
           priority: variables.priority ?? task.priority,
-          detail:
-            variables.detail !== undefined ? variables.detail : task.detail,
-          checklist:
-            variables.checklist !== undefined
-              ? variables.checklist ?? undefined
-              : task.checklist,
+          detail: nextDetail,
+          checklist: nextChecklist,
           taskDate: variables.taskDate ?? task.taskDate,
           swimlaneId: variables.swimlaneId ?? task.swimlaneId,
           isPending: true,
