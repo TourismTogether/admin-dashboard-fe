@@ -1,8 +1,8 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
-import { Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -21,9 +21,12 @@ import {
 import { selectAuthUser } from "@/store/authSlice";
 import {
   getLeaderboard,
+  type LeaderboardPeriod,
   type LeaderboardEntry,
 } from "@/lib/api/portfolioApi";
 import { generateAvatarUrl } from "@/components/portfolio/shared/utils";
+
+const MAX_USER_LEADERBOARD = 6;
 
 const formatNumber = (value: number): string =>
   new Intl.NumberFormat("en-US").format(value);
@@ -51,6 +54,7 @@ const getRankLabel = (rank: number): string => {
 
 const LeaderboardPage: React.FC = () => {
   const currentUser = useSelector(selectAuthUser);
+  const [period, setPeriod] = React.useState<LeaderboardPeriod>("current");
 
   const {
     data: leaderboard = [],
@@ -58,12 +62,19 @@ const LeaderboardPage: React.FC = () => {
     isError,
     error,
   } = useQuery<LeaderboardEntry[]>({
-    queryKey: ["portfolio", "leaderboard"],
-    queryFn: getLeaderboard,
+    queryKey: ["portfolio", "leaderboard", period],
+    queryFn: () => getLeaderboard(period),
   });
 
+  const visibleLeaderboard = leaderboard.slice(0, MAX_USER_LEADERBOARD);
+  const currentUserEntry = currentUser
+    ? leaderboard.find((item) => item.userId === currentUser.userId) ?? null
+    : null;
+  const isCurrentUserOutsideTop =
+    !!currentUserEntry && currentUserEntry.rank > MAX_USER_LEADERBOARD;
+
   const podiumOrder = [2, 1, 3]
-    .map((rank) => leaderboard.find((item) => item.rank === rank) || null)
+    .map((rank) => visibleLeaderboard.find((item) => item.rank === rank) || null)
     .filter((item): item is LeaderboardEntry => item !== null);
 
   if (isLoading) {
@@ -100,11 +111,42 @@ const LeaderboardPage: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold">Leaderboard</h1>
         </div>
-        <Badge variant="outline" className="gap-1">
-          <Trophy className="h-3.5 w-3.5" />
-          {leaderboard.length} users
-        </Badge>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex items-center rounded-md border p-1">
+            <Button
+              size="sm"
+              variant={period === "current" ? "default" : "ghost"}
+              onClick={() => setPeriod("current")}
+            >
+              Current Week
+            </Button>
+            <Button
+              size="sm"
+              variant={period === "previous" ? "default" : "ghost"}
+              onClick={() => setPeriod("previous")}
+            >
+              Previous Week
+            </Button>
+          </div>
+        </div>
       </div>
+
+      {isCurrentUserOutsideTop && currentUserEntry ? (
+        <Card className="mb-4 border-primary/60 bg-primary/5">
+          <CardContent className="flex items-center justify-between gap-3 p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Your Rank</p>
+              <p className="text-lg font-semibold text-primary">
+                {getRankLabel(currentUserEntry.rank)} · {currentUserEntry.displayName}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Score</p>
+              <p className="text-lg font-semibold">{formatNumber(currentUserEntry.score)}</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardContent className="pt-6">
@@ -126,7 +168,7 @@ const LeaderboardPage: React.FC = () => {
                         : item.rank === 2
                         ? "order-2 md:order-1 border-border bg-gradient-to-b from-muted/40 to-card"
                         : "order-3 md:order-3 border-secondary/40 bg-gradient-to-b from-secondary/20 to-card"
-                    }`}
+                    } ${isCurrentUser ? "ring-2 ring-primary shadow-sm" : ""}`}
                   >
                     <CardContent className="p-5">
                       <div className="mb-4 flex items-start justify-between gap-2">
@@ -137,7 +179,7 @@ const LeaderboardPage: React.FC = () => {
                           {getRankLabel(item.rank)}
                         </Badge>
                         {isCurrentUser ? (
-                          <span className="text-xs text-muted-foreground">you</span>
+                          <Badge variant="default" className="text-xs">You</Badge>
                         ) : null}
                       </div>
 
@@ -188,7 +230,7 @@ const LeaderboardPage: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {leaderboard.map((item) => {
+              {visibleLeaderboard.map((item) => {
                 const isCurrentUser = currentUser?.userId === item.userId;
                 const avatarSrc =
                   item.avatarUrl ||
@@ -197,7 +239,11 @@ const LeaderboardPage: React.FC = () => {
                 return (
                   <TableRow
                     key={item.userId}
-                    className={isCurrentUser ? "bg-muted/40" : undefined}
+                    className={
+                      isCurrentUser
+                        ? "bg-primary/10 hover:bg-primary/15"
+                        : undefined
+                    }
                   >
                     <TableCell>
                       <Badge
@@ -224,9 +270,9 @@ const LeaderboardPage: React.FC = () => {
                           <div className="truncate text-sm font-medium">
                             {item.displayName}
                             {isCurrentUser ? (
-                              <span className="ml-2 text-xs text-muted-foreground">
-                                (you)
-                              </span>
+                              <Badge variant="default" className="ml-2 text-[10px]">
+                                You
+                              </Badge>
                             ) : null}
                           </div>
                           <div className="truncate text-xs text-muted-foreground">
@@ -249,6 +295,61 @@ const LeaderboardPage: React.FC = () => {
                   </TableRow>
                 );
               })}
+
+              {isCurrentUserOutsideTop && currentUserEntry ? (
+                <TableRow className="bg-primary/10 hover:bg-primary/15">
+                  <TableCell>
+                    <Badge
+                      variant={getRankBadgeVariant(currentUserEntry.rank)}
+                      className={getMedalBadgeClass(currentUserEntry.rank)}
+                    >
+                      {getRankLabel(currentUserEntry.rank)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={
+                          currentUserEntry.avatarUrl ||
+                          generateAvatarUrl(
+                            currentUserEntry.displayName || currentUserEntry.email
+                          )
+                        }
+                        alt={currentUserEntry.displayName}
+                        className="h-8 w-8 rounded-full border object-cover"
+                        loading="lazy"
+                        onError={(event) => {
+                          event.currentTarget.src = generateAvatarUrl(
+                            currentUserEntry.displayName || currentUserEntry.email
+                          );
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium">
+                          {currentUserEntry.displayName}
+                          <Badge variant="default" className="ml-2 text-[10px]">
+                            You
+                          </Badge>
+                        </div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {currentUserEntry.email}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">
+                    {formatNumber(currentUserEntry.score)}
+                  </TableCell>
+                  <TableCell className="text-right">{currentUserEntry.commits}</TableCell>
+                  <TableCell className="text-right">
+                    {currentUserEntry.commitsLast30Days}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {currentUserEntry.highPriorityCommits}
+                  </TableCell>
+                  <TableCell className="text-right">{currentUserEntry.streakDays}</TableCell>
+                </TableRow>
+              ) : null}
             </TableBody>
           </Table>
         </CardContent>

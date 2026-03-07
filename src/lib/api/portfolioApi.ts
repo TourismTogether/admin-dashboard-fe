@@ -40,6 +40,8 @@ export interface LeaderboardEntry {
   rank: number;
 }
 
+export type LeaderboardPeriod = "current" | "previous";
+
 // Get user's portfolio
 export async function getPortfolio(): Promise<Portfolio | null> {
   const response = await apiRequest("/api/portfolio");
@@ -89,8 +91,10 @@ export async function getContributions(): Promise<Record<string, number>> {
 }
 
 // Get leaderboard data
-export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
-  const response = await apiRequest("/api/portfolio/leaderboard");
+export async function getLeaderboard(
+  period: LeaderboardPeriod = "current"
+): Promise<LeaderboardEntry[]> {
+  const response = await apiRequest(`/api/portfolio/leaderboard?period=${period}`);
   if (!response.ok) {
     throw new Error("Failed to fetch leaderboard");
   }
