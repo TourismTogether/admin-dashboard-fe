@@ -17,6 +17,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import PersonalTaskPage from "./pages/PersonalTaskPage";
 import GroupTaskPage from "./pages/GroupTaskPage";
 import PortfolioPage from "./pages/PortfolioPage";
+import LeaderboardPage from "./pages/LeaderboardPage";
 import SelfStudyPage from "./pages/SelfStudyPage";
 import SettingsPage from "./pages/SettingsPage";
 import BrainstormPage from "./pages/BrainstormPage";
@@ -76,6 +77,14 @@ const router = createBrowserRouter([
             element: (
               <ProtectedRoute>
                 <PortfolioPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "leaderboard",
+            element: (
+              <ProtectedRoute>
+                <LeaderboardPage />
               </ProtectedRoute>
             ),
           },
