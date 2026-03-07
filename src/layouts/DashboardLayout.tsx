@@ -11,6 +11,7 @@ const baseNavItems = [
   { path: "/personal-tasks", label: "Personal Tasks" },
   { path: "/group-tasks", label: "Group Tasks" },
   { path: "/portfolio", label: "Portfolio" },
+  { path: "/leaderboard", label: "Leaderboard" },
   { path: "/brainstorm", label: "Brainstorm" },
   { path: "/settings", label: "Settings" },
 ];

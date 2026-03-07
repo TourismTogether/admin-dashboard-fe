@@ -27,6 +27,19 @@ export interface PortfolioUpdateData {
   twitterUsername?: string;
 }
 
+export interface LeaderboardEntry {
+  userId: string;
+  displayName: string;
+  email: string;
+  avatarUrl: string | null;
+  commits: number;
+  commitsLast30Days: number;
+  highPriorityCommits: number;
+  streakDays: number;
+  score: number;
+  rank: number;
+}
+
 // Get user's portfolio
 export async function getPortfolio(): Promise<Portfolio | null> {
   const response = await apiRequest("/api/portfolio");
@@ -73,6 +86,16 @@ export async function getContributions(): Promise<Record<string, number>> {
   }
   const data = await response.json();
   return data.data || {};
+}
+
+// Get leaderboard data
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
+  const response = await apiRequest("/api/portfolio/leaderboard");
+  if (!response.ok) {
+    throw new Error("Failed to fetch leaderboard");
+  }
+  const data = await response.json();
+  return data.data || [];
 }
 
 // ChecklistItem interface
