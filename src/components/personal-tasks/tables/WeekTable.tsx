@@ -353,7 +353,7 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                       >
-                        <div className="space-y-2">
+                        <div className="space-y-2 max-h-[280px] overflow-y-auto">
                           {tasksForDay.map((task) => (
                             <div
                               key={task.taskId}
