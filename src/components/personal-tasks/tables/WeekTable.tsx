@@ -11,7 +11,39 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import type { Task, Swimlane as BaseSwimlane } from "../shared/types";
+import type { Task, Swimlane as BaseSwimlane, TaskDifficulty } from "../shared/types";
+
+const DIFFICULTY_LABEL: Record<TaskDifficulty, string> = {
+  easy: "Easy",
+  medium: "Medium",
+  hard: "Hard",
+};
+
+function getDifficultyStyles(difficulty: TaskDifficulty) {
+  switch (difficulty) {
+    case "easy":
+      return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800";
+    case "medium":
+      return "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800";
+    case "hard":
+      return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+}
+
+function getDifficultyBorderClass(difficulty: TaskDifficulty) {
+  switch (difficulty) {
+    case "easy":
+      return "border-l-4 border-l-emerald-500 dark:border-l-emerald-400";
+    case "medium":
+      return "border-l-4 border-l-amber-500 dark:border-l-amber-400";
+    case "hard":
+      return "border-l-4 border-l-red-500 dark:border-l-red-400";
+    default:
+      return "";
+  }
+}
 
 /** Format swimlane start (HH:MM or HH:MM:SS) + duration (minutes) as "start - end" (HH:MM - HH:MM) */
 function formatSwimlaneTimeRange(
@@ -376,6 +408,7 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                               }}
                               className={cn(
                                 "p-2 border rounded bg-card hover:bg-accent cursor-pointer group/task transition-opacity",
+                                getDifficultyBorderClass((task.difficulty ?? "medium") as TaskDifficulty),
                                 draggedTask?.taskId === task.taskId &&
                                   "opacity-50",
                                 task.isPending && "opacity-70"
@@ -392,15 +425,23 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                                   >
                                     {task.content}
                                   </div>
-                                  <div className="flex gap-1 mt-1">
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    <span
+                                      className={cn(
+                                        "text-xs px-1.5 py-0.5 rounded border",
+                                        getDifficultyStyles((task.difficulty ?? "medium") as TaskDifficulty)
+                                      )}
+                                    >
+                                      {DIFFICULTY_LABEL[(task.difficulty ?? "medium") as TaskDifficulty]}
+                                    </span>
                                     <span
                                       className={cn(
                                         "text-xs px-1.5 py-0.5 rounded",
                                         task.status === "done"
-                                          ? "bg-green-100 text-green-800"
+                                          ? "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"
                                           : task.status === "in_progress"
-                                          ? "bg-blue-100 text-blue-800"
-                                          : "bg-gray-100 text-gray-800"
+                                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
+                                          : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
                                       )}
                                     >
                                       {task.status}
@@ -409,10 +450,10 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                                       className={cn(
                                         "text-xs px-1.5 py-0.5 rounded",
                                         task.priority === "high"
-                                          ? "bg-red-100 text-red-800"
+                                          ? "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300"
                                           : task.priority === "medium"
-                                          ? "bg-yellow-100 text-yellow-800"
-                                          : "bg-gray-100 text-gray-800"
+                                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300"
+                                          : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
                                       )}
                                     >
                                       {task.priority}

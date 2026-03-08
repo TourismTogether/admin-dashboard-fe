@@ -34,6 +34,12 @@ const COLORS = {
   low: "#22c55e", // green
 };
 
+const DIFFICULTY_COLORS: Record<string, string> = {
+  easy: "#10b981",   // emerald
+  medium: "#f59e0b", // amber
+  hard: "#ef4444",   // red
+};
+
 export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
   swimlanes,
   startDate,
@@ -91,6 +97,32 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
       value,
       color: COLORS[name as keyof typeof COLORS] || "#94a3b8",
     }));
+  }, [allTasks]);
+
+  // Tasks by difficulty
+  const tasksByDifficulty = useMemo(() => {
+    const difficultyCount: Record<string, number> = {
+      easy: 0,
+      medium: 0,
+      hard: 0,
+    };
+
+    allTasks.forEach((task) => {
+      const d = (task.difficulty ?? "medium").toLowerCase();
+      if (difficultyCount[d] !== undefined) {
+        difficultyCount[d]++;
+      } else {
+        difficultyCount.medium++;
+      }
+    });
+
+    return Object.entries(difficultyCount)
+      .filter(([, count]) => count > 0)
+      .map(([name, value]) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        value,
+        color: DIFFICULTY_COLORS[name] ?? DIFFICULTY_COLORS.medium,
+      }));
   }, [allTasks]);
 
   // Tasks completion over time (last 7 days)
@@ -223,7 +255,7 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Tasks by Status Pie Chart */}
         <Card>
           <CardHeader>
@@ -293,8 +325,37 @@ export const PerformanceStats: React.FC<PerformanceStatsProps> = ({
           </CardContent>
         </Card>
 
+        {/* Tasks by Difficulty Pie Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Tasks by Difficulty</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={tasksByDifficulty}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {tasksByDifficulty.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
         {/* Completion Rate Over Time Line Chart */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Completion Rate Over Time</CardTitle>
           </CardHeader>

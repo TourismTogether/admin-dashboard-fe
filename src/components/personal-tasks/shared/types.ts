@@ -4,12 +4,15 @@ export interface ChecklistItem {
   isComplete: boolean;
 }
 
+export type TaskDifficulty = "easy" | "medium" | "hard";
+
 export interface Task {
   taskId: string;
   swimlaneId: string;
   content: string;
   status: string;
   priority: string;
+  difficulty?: TaskDifficulty;
   detail?: string;
   checklist?: ChecklistItem[];
   taskDate: string;

@@ -191,6 +191,7 @@ const ShareTablePage: React.FC = () => {
       content: string;
       status?: string;
       priority?: string;
+      difficulty?: "easy" | "medium" | "hard";
       taskDate: string;
       detail?: string | null;
       checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null;
@@ -280,16 +281,19 @@ const ShareTablePage: React.FC = () => {
     priority: string,
     taskDate: string,
     detail?: string,
-    checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null
+    checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null,
+    difficulty?: "easy" | "medium" | "hard"
   ) => {
     if (!editingTask || requireFork()) return;
     const detailVal = detail?.trim() || null;
+    const difficultyVal = difficulty && ["easy", "medium", "hard"].includes(difficulty) ? difficulty : "medium";
     if (editingTask.task) {
       updateTaskMutation.mutate({
         taskId: editingTask.task.taskId,
         content,
         status,
         priority,
+        difficulty: difficultyVal,
         detail: detailVal,
         checklist: checklist ?? null,
       });
@@ -299,6 +303,7 @@ const ShareTablePage: React.FC = () => {
         content,
         status,
         priority,
+        difficulty: difficultyVal,
         taskDate,
         detail: detailVal,
         checklist: checklist ?? null,
@@ -354,14 +359,17 @@ const ShareTablePage: React.FC = () => {
     status: string,
     priority: string,
     detail?: string,
-    checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null
+    checklist?: Array<{ id: string; description: string; isComplete: boolean }> | null,
+    difficulty?: "easy" | "medium" | "hard"
   ) => {
     if (requireFork()) return;
+    const difficultyVal = difficulty && ["easy", "medium", "hard"].includes(difficulty) ? difficulty : "medium";
     updateTaskMutation.mutate({
       taskId,
       content,
       status,
       priority,
+      difficulty: difficultyVal,
       detail: detail?.trim() || null,
       checklist: checklist ?? null,
     });
@@ -372,11 +380,13 @@ const ShareTablePage: React.FC = () => {
   };
 
   const handleCopyTask = (task: Task) => {
+    const difficultyVal = task.difficulty && ["easy", "medium", "hard"].includes(task.difficulty) ? task.difficulty : "medium";
     createTaskMutation.mutate({
       swimlaneId: task.swimlaneId,
       content: `${task.content} (Copy)`,
       status: task.status,
       priority: task.priority,
+      difficulty: difficultyVal,
       taskDate: task.taskDate,
       detail: task.detail ?? null,
       checklist: task.checklist ?? null,

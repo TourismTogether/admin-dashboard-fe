@@ -449,6 +449,7 @@ const PersonalTaskPage: React.FC = () => {
       content: string;
       status?: string;
       priority?: string;
+      difficulty?: "easy" | "medium" | "hard";
       taskDate: string;
       detail?: string | null;
       checklist?: Array<{
@@ -491,6 +492,7 @@ const PersonalTaskPage: React.FC = () => {
         content: variables.content,
         status: variables.status ?? "todo",
         priority: variables.priority ?? "medium",
+        difficulty: (variables.difficulty && ["easy", "medium", "hard"].includes(variables.difficulty) ? variables.difficulty : "medium") as Task["difficulty"],
         detail: variables.detail ?? undefined,
         checklist: variables.checklist ?? undefined,
         taskDate: variables.taskDate,
@@ -576,6 +578,7 @@ const PersonalTaskPage: React.FC = () => {
       content?: string;
       status?: string;
       priority?: string;
+      difficulty?: "easy" | "medium" | "hard";
       detail?: string | null;
       checklist?: Array<{
         id: string;
@@ -621,11 +624,16 @@ const PersonalTaskPage: React.FC = () => {
             ? variables.checklist ?? undefined
             : task.checklist;
 
+        const nextDifficulty =
+          variables.difficulty !== undefined && ["easy", "medium", "hard"].includes(variables.difficulty)
+            ? variables.difficulty
+            : task.difficulty ?? "medium";
         return {
           ...task,
           content: variables.content ?? task.content,
           status: variables.status ?? task.status,
           priority: variables.priority ?? task.priority,
+          difficulty: nextDifficulty,
           detail: nextDetail,
           checklist: nextChecklist,
           taskDate: variables.taskDate ?? task.taskDate,
@@ -795,8 +803,10 @@ const PersonalTaskPage: React.FC = () => {
           content: `${task.content} (Copy)`,
           status: task.status,
           priority: task.priority,
+          difficulty: (task.difficulty && ["easy", "medium", "hard"].includes(task.difficulty) ? task.difficulty : "medium"),
           taskDate: task.taskDate,
-          detail: task.detail,
+          detail: task.detail ?? null,
+          checklist: task.checklist ?? null,
         }),
       });
       if (!response.ok) throw new Error("Failed to copy task");
@@ -978,12 +988,14 @@ const PersonalTaskPage: React.FC = () => {
       id: string;
       description: string;
       isComplete: boolean;
-    }> | null
+    }> | null,
+    difficulty?: "easy" | "medium" | "hard"
   ) => {
     if (!editingTask) return;
 
     const detailValue = detail && detail.trim() ? detail.trim() : null;
     const checklistValue = checklist !== undefined ? checklist : null;
+    const difficultyValue = difficulty && ["easy", "medium", "hard"].includes(difficulty) ? difficulty : "medium";
 
     if (editingTask.task) {
       const updateData: {
@@ -991,6 +1003,7 @@ const PersonalTaskPage: React.FC = () => {
         content: string;
         status: string;
         priority: string;
+        difficulty?: "easy" | "medium" | "hard";
         detail: string | null;
         checklist?: Array<{
           id: string;
@@ -1002,6 +1015,7 @@ const PersonalTaskPage: React.FC = () => {
         content,
         status,
         priority,
+        difficulty: difficultyValue,
         detail: detailValue,
         checklist: checklistValue,
       };
@@ -1012,6 +1026,7 @@ const PersonalTaskPage: React.FC = () => {
         content: string;
         status: string;
         priority: string;
+        difficulty?: "easy" | "medium" | "hard";
         taskDate: string;
         detail: string | null;
         checklist?: Array<{
@@ -1024,6 +1039,7 @@ const PersonalTaskPage: React.FC = () => {
         content,
         status,
         priority,
+        difficulty: difficultyValue,
         taskDate,
         detail: detailValue,
         checklist: checklistValue,
@@ -1097,15 +1113,18 @@ const PersonalTaskPage: React.FC = () => {
       id: string;
       description: string;
       isComplete: boolean;
-    }> | null
+    }> | null,
+    difficulty?: "easy" | "medium" | "hard"
   ) => {
     const detailValue = detail && detail.trim() ? detail.trim() : null;
     const checklistValue = checklist !== undefined ? checklist : null;
+    const difficultyValue = difficulty && ["easy", "medium", "hard"].includes(difficulty) ? difficulty : "medium";
     const updateData: {
       taskId: string;
       content: string;
       status: string;
       priority: string;
+      difficulty?: "easy" | "medium" | "hard";
       detail: string | null;
       checklist?: Array<{
         id: string;
@@ -1117,6 +1136,7 @@ const PersonalTaskPage: React.FC = () => {
       content,
       status,
       priority,
+      difficulty: difficultyValue,
       detail: detailValue,
       checklist: checklistValue,
     };

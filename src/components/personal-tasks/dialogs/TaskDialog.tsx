@@ -14,14 +14,20 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { Task, ChecklistItem } from "../shared/types";
+import type { Task, ChecklistItem, TaskDifficulty } from "../shared/types";
+
+const DIFFICULTY_OPTIONS: { value: TaskDifficulty; label: string }[] = [
+  { value: "easy", label: "Easy" },
+  { value: "medium", label: "Medium" },
+  { value: "hard", label: "Hard" },
+];
 
 interface TaskDialogProps {
   task: Task | null;
   taskDate: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (content: string, status: string, priority: string, taskDate: string, detail?: string, checklist?: ChecklistItem[] | null) => void;
+  onSave: (content: string, status: string, priority: string, taskDate: string, detail?: string, checklist?: ChecklistItem[] | null, difficulty?: TaskDifficulty) => void;
 }
 
 export const TaskDialog: React.FC<TaskDialogProps> = ({
@@ -34,6 +40,7 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
   const [content, setContent] = useState("");
   const [status, setStatus] = useState("todo");
   const [priority, setPriority] = useState("medium");
+  const [difficulty, setDifficulty] = useState<TaskDifficulty>("medium");
   const [detail, setDetail] = useState("");
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
 
@@ -56,6 +63,7 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
       setContent("");
       setStatus("todo");
       setPriority("medium");
+      setDifficulty("medium");
       setDetail("");
       setChecklist([]);
       return;
@@ -66,6 +74,7 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
       setContent(task.content);
       setStatus(task.status);
       setPriority(task.priority);
+      setDifficulty((task.difficulty && ["easy", "medium", "hard"].includes(task.difficulty) ? task.difficulty : "medium") as TaskDifficulty);
       setDetail(task.detail || "");
       const loadedChecklist = task.checklist ? [...task.checklist] : [];
       setChecklist(ensureChecklistIds(loadedChecklist));
@@ -73,6 +82,7 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
       setContent("");
       setStatus("todo");
       setPriority("medium");
+      setDifficulty("medium");
       setDetail("");
       setChecklist([]);
     }
@@ -98,7 +108,7 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
     const validChecklist = checklist.filter(item => item.description.trim());
     const detailValue = detail.trim() ? detail.trim() : null;
     const checklistValue = validChecklist.length > 0 ? validChecklist : null;
-    onSave(content, status, priority, taskDate, detailValue || undefined, checklistValue);
+    onSave(content, status, priority, taskDate, detailValue || undefined, checklistValue, difficulty);
   };
 
   return (
@@ -159,6 +169,19 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="task-difficulty">Difficulty</Label>
+            <select
+              id="task-difficulty"
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value as TaskDifficulty)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+            >
+              {DIFFICULTY_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
           </div>
           <div className="space-y-2">

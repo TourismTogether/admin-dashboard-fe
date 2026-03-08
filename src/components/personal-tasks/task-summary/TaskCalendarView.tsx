@@ -24,6 +24,8 @@ import {
 import {
   getPriorityBadgeVariant,
   getStatusBadgeVariant,
+  getDifficultyBadgeClassName,
+  formatDifficultyLabel,
 } from "../shared/utils";
 import { MonthlyPerformanceStats } from "../performance-stats";
 
@@ -441,7 +443,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                             </PopoverTrigger>
                             <PopoverContent
                               align="start"
-                              className="w-64 p-2 max-h-64 overflow-y-auto"
+                              className="w-72 p-2 max-h-112 overflow-y-auto"
                             >
                               <div className="space-y-1">
                                 {dayTasks.map((task) => (
@@ -469,6 +471,15 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                                         className="text-[10px] shrink-0"
                                       >
                                         {task.priority}
+                                      </Badge>
+                                      <Badge
+                                        variant="outline"
+                                        className={cn(
+                                          "text-[10px] shrink-0 border",
+                                          getDifficultyBadgeClassName(task.difficulty ?? "medium")
+                                        )}
+                                      >
+                                        {formatDifficultyLabel(task.difficulty ?? "medium")}
                                       </Badge>
                                       <span
                                       className={cn(
@@ -532,7 +543,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
             onClick={() => setMobileSheetDate(null)}
             aria-hidden
           />
-          <div className="fixed inset-x-0 bottom-0 z-50 max-h-[70vh] overflow-y-auto rounded-t-lg border border-gray-100 bg-background shadow-lg sm:hidden">
+          <div className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-lg border border-gray-100 bg-background shadow-lg sm:hidden">
             <div className="sticky top-0 flex items-center justify-between border-b border-gray-100 bg-background px-4 py-3">
               <span className="text-sm font-medium">
                 {format(parseISO(mobileSheetDate), "EEE, MMM d, yyyy")}
@@ -577,6 +588,15 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                         className="shrink-0"
                       >
                         {task.priority}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "shrink-0 border",
+                          getDifficultyBadgeClassName(task.difficulty ?? "medium")
+                        )}
+                      >
+                        {formatDifficultyLabel(task.difficulty ?? "medium")}
                       </Badge>
                       <span
                         className={cn(
