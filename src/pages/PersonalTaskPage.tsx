@@ -56,6 +56,7 @@ interface Task {
   content: string;
   status: string;
   priority: string;
+  difficulty?: "easy" | "medium" | "hard";
   detail?: string;
   checklist?: Array<{
     id: string;
