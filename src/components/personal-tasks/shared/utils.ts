@@ -55,3 +55,8 @@ export const formatDifficultyLabel = (difficulty: string): string => {
   const d = (difficulty || "medium").toLowerCase();
   return d.charAt(0).toUpperCase() + d.slice(1);
 };
+
+/** True while create-task optimistic UI uses a temporary id (not a server UUID). */
+export function isOptimisticTaskId(taskId: string): boolean {
+  return taskId.startsWith("optimistic-");
+}

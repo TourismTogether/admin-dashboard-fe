@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import type { Task, Swimlane as BaseSwimlane, TaskDifficulty } from "../shared/types";
+import { isOptimisticTaskId } from "../shared/utils";
 
 const DIFFICULTY_LABEL: Record<TaskDifficulty, string> = {
   easy: "Easy",
@@ -100,6 +101,8 @@ interface WeekTableProps {
     newSwimlaneId?: string
   ) => void;
   onCopyTask?: (task: Task) => void;
+  /** When true, task/swimlane editing is disabled (e.g. while a task mutation is in flight). */
+  readOnly?: boolean;
 }
 
 export const WeekTable: React.FC<WeekTableProps> = ({
@@ -114,6 +117,7 @@ export const WeekTable: React.FC<WeekTableProps> = ({
   onDeleteTask,
   onMoveTask,
   onCopyTask,
+  readOnly = false,
 }) => {
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragOverDayIndex, setDragOverDayIndex] = useState<number | null>(null);
@@ -153,7 +157,12 @@ export const WeekTable: React.FC<WeekTableProps> = ({
   );
 
   return (
-    <div className="space-y-4">
+    <div className={cn("space-y-4", readOnly && "relative")}>
+      {readOnly && (
+        <p className="text-sm text-muted-foreground rounded-md border border-dashed border-muted-foreground/30 bg-muted/40 px-3 py-2">
+          Đang đồng bộ task — tạm thời không chỉnh sửa.
+        </p>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold">
@@ -161,13 +170,13 @@ export const WeekTable: React.FC<WeekTableProps> = ({
             {format(addDays(startDateParsed, 6), "MMM d, yyyy")}
           </h2>
         </div>
-        <Button variant="outline" onClick={onAddSwimlane}>
+        <Button variant="outline" onClick={onAddSwimlane} disabled={readOnly}>
           <Plus className="h-4 w-4 mr-2" />
           Add Swimlane
         </Button>
       </div>
 
-      <div className="w-full overflow-x-auto rounded-lg border">
+      <div className={cn("w-full overflow-x-auto rounded-lg border", readOnly && "opacity-90")}>
         <Table className="min-w-[800px]">
           <TableHeader>
             <TableRow>
@@ -245,6 +254,7 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                             variant="ghost"
                             size="icon"
                             onClick={() => onEditSwimlane(swimlane)}
+                            disabled={readOnly}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -255,6 +265,7 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                           onClick={() => {
                             onDeleteSwimlane(swimlane.swimlaneId);
                           }}
+                          disabled={readOnly}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -354,6 +365,17 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                       e.stopPropagation();
                       setDragOverDayIndex(null);
                       setDragOverSwimlaneId(null);
+                      if (readOnly) {
+                        setDraggedTask(null);
+                        return;
+                      }
+                      if (
+                        draggedTask &&
+                        isOptimisticTaskId(draggedTask.taskId)
+                      ) {
+                        setDraggedTask(null);
+                        return;
+                      }
 
                       if (draggedTask && onMoveTask) {
                         const newTaskDate = format(day, "yyyy-MM-dd");
@@ -386,11 +408,15 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                         onDrop={handleDrop}
                       >
                         <div className="space-y-2 max-h-[280px] overflow-y-auto">
-                          {tasksForDay.map((task) => (
+                          {tasksForDay.map((task) => {
+                            const taskLocked =
+                              readOnly || isOptimisticTaskId(task.taskId);
+                            return (
                             <div
                               key={task.taskId}
-                              draggable={!!onMoveTask}
+                              draggable={!!onMoveTask && !taskLocked}
                               onDragStart={(e) => {
+                                if (taskLocked) return;
                                 setDraggedTask(task);
                                 e.dataTransfer.effectAllowed = "move";
                                 // Add visual feedback
@@ -407,15 +433,19 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                                 setDragOverSwimlaneId(null);
                               }}
                               className={cn(
-                                "p-2 border rounded bg-card hover:bg-accent cursor-pointer group/task transition-opacity",
+                                "p-2 border rounded bg-card group/task transition-opacity",
+                                taskLocked
+                                  ? "cursor-wait opacity-95"
+                                  : "hover:bg-accent cursor-pointer",
                                 getDifficultyBorderClass((task.difficulty ?? "medium") as TaskDifficulty),
                                 draggedTask?.taskId === task.taskId &&
                                   "opacity-50",
                                 task.isPending && "opacity-70"
                               )}
-                              onClick={() =>
-                                onEditTask(task, swimlane.swimlaneId, dayIndex)
-                              }
+                              onClick={() => {
+                                if (taskLocked) return;
+                                onEditTask(task, swimlane.swimlaneId, dayIndex);
+                              }}
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex-1 min-w-0 overflow-hidden">
@@ -466,8 +496,10 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                                       variant="ghost"
                                       size="icon"
                                       className="h-6 w-6"
+                                      disabled={taskLocked}
                                       onClick={(e) => {
                                         e.stopPropagation();
+                                        if (taskLocked) return;
                                         onCopyTask(task);
                                       }}
                                       title="Copy task"
@@ -479,8 +511,10 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                                     variant="ghost"
                                     size="icon"
                                     className="h-6 w-6"
+                                    disabled={taskLocked}
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      if (taskLocked) return;
                                       onDeleteTask(task.taskId, task.content);
                                     }}
                                     title="Delete task"
@@ -490,14 +524,17 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                                 </div>
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                           <Button
                             variant="ghost"
                             size="icon"
                             className="absolute top-2 right-2 opacity-0 group-hover/cell:opacity-100 h-6 w-6 rounded-full hover:bg-primary/10"
-                            onClick={() =>
-                              onAddTask(swimlane.swimlaneId, dayIndex)
-                            }
+                            disabled={readOnly}
+                            onClick={() => {
+                              if (readOnly) return;
+                              onAddTask(swimlane.swimlaneId, dayIndex);
+                            }}
                           >
                             <Plus className="h-4 w-4" />
                           </Button>

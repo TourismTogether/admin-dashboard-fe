@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +37,7 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
   onSave,
   isLoading = false,
 }) => {
+  const contentInputRef = useRef<HTMLInputElement>(null);
   const [content, setContent] = useState("");
   const [status, setStatus] = useState("todo");
   const [priority, setPriority] = useState("medium");
@@ -115,7 +116,13 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          requestAnimationFrame(() => contentInputRef.current?.focus());
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Task Details</DialogTitle>
           <DialogDescription>
@@ -125,28 +132,29 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="task-date">Date</Label>
-              <Input
-                id="task-date"
-                value={format(parseISO(task.taskDate), "MMM d, yyyy")}
-                disabled
-                className="bg-muted"
-              />
+              <Label>Date</Label>
+              <div
+                className="flex h-9 w-full items-center rounded-md border border-input bg-muted px-3 py-2 text-sm text-foreground"
+                aria-readonly
+              >
+                {format(parseISO(task.taskDate), "MMM d, yyyy")}
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="task-created">Created</Label>
-              <Input
-                id="task-created"
-                value={format(parseISO(task.createdAt), "MMM d, yyyy HH:mm")}
-                disabled
-                className="bg-muted"
-              />
+              <Label>Created</Label>
+              <div
+                className="flex h-9 w-full items-center rounded-md border border-input bg-muted px-3 py-2 text-sm text-foreground"
+                aria-readonly
+              >
+                {format(parseISO(task.createdAt), "MMM d, yyyy HH:mm")}
+              </div>
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="task-content">Content</Label>
             <Input
+              ref={contentInputRef}
               id="task-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}

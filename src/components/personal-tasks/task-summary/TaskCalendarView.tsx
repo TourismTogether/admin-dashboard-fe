@@ -34,6 +34,8 @@ interface TaskCalendarViewProps {
   onViewTask: (task: Task) => void;
   onDeleteTask?: (taskId: string, content: string) => void;
   onAddTaskForDate?: (date: string) => void;
+  /** When true, task actions are disabled while a task mutation is in progress. */
+  readOnly?: boolean;
 }
 
 type HolidayMap = Record<string, string>;
@@ -100,6 +102,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
   onViewTask,
   onDeleteTask,
   onAddTaskForDate,
+  readOnly = false,
 }) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(() => new Date());
   const [mobileSheetDate, setMobileSheetDate] = useState<string | null>(null);
@@ -193,6 +196,11 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
 
   return (
     <div className="w-full space-y-4">
+      {readOnly && (
+        <p className="text-sm text-muted-foreground rounded-md border border-dashed border-muted-foreground/30 bg-muted/40 px-3 py-2">
+          Đang đồng bộ task — tạm thời không chỉnh sửa.
+        </p>
+      )}
       {/* Header: < | Month Year | > + Today */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1">
@@ -334,13 +342,16 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                       {isCurrentMonth && onAddTaskForDate && (
                         <button
                           type="button"
+                          disabled={readOnly}
                           onClick={(e) => {
                             e.stopPropagation();
+                            if (readOnly) return;
                             onAddTaskForDate(dateKey);
                           }}
                           className={cn(
                             "w-5 h-5 shrink-0 rounded-full flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-600 hover:text-gray-800 transition-opacity",
-                            "opacity-100 sm:opacity-0 sm:group-hover/cell:opacity-100"
+                            "opacity-100 sm:opacity-0 sm:group-hover/cell:opacity-100",
+                            readOnly && "opacity-40 pointer-events-none"
                           )}
                           title="Add task"
                         >
@@ -361,9 +372,10 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                     <div
                       className={cn(
                         "flex-1 min-h-0 overflow-hidden mt-0.5",
-                        "cursor-pointer"
+                        readOnly ? "cursor-wait" : "cursor-pointer"
                       )}
                       onClick={(e) => {
+                        if (readOnly) return;
                         if (e.target !== e.currentTarget) return;
                         if (!isCurrentMonth) return;
                         if (window.innerWidth < 640) {
@@ -384,11 +396,13 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                           >
                             <button
                               type="button"
+                              disabled={readOnly}
                               onClick={(e) => {
                                 e.stopPropagation();
+                                if (readOnly) return;
                                 onViewTask(task);
                               }}
-                              className="flex-1 min-w-0 text-left"
+                              className="flex-1 min-w-0 text-left disabled:opacity-60"
                             >
                               <span className="sm:hidden flex items-center justify-center">
                                 <span
@@ -413,11 +427,13 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                             {onDeleteTask && (
                               <button
                                 type="button"
+                                disabled={readOnly}
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  if (readOnly) return;
                                   onDeleteTask(task.taskId, task.content);
                                 }}
-                                className="shrink-0 p-0.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover/task:opacity-100 sm:opacity-70"
+                                className="shrink-0 p-0.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover/task:opacity-100 sm:opacity-70 disabled:pointer-events-none"
                                 title="Xóa task"
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -430,13 +446,15 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                             <PopoverTrigger asChild>
                               <button
                                 type="button"
+                                disabled={readOnly}
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  if (readOnly) return;
                                   if (window.innerWidth < 640) {
                                     setMobileSheetDate(dateKey);
                                   }
                                 }}
-                                className="text-[10px] text-muted-foreground hover:text-foreground text-left w-full shrink-0 px-1.5 py-0.5 rounded-full inline-flex items-center justify-center"
+                                className="text-[10px] text-muted-foreground hover:text-foreground text-left w-full shrink-0 px-1.5 py-0.5 rounded-full inline-flex items-center justify-center disabled:opacity-50"
                               >
                                 +{dayTasks.length - 3} more
                               </button>
@@ -453,8 +471,12 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                                   >
                                     <button
                                       type="button"
-                                      onClick={() => onViewTask(task)}
-                                      className="flex-1 min-w-0 text-left flex items-center gap-2"
+                                      disabled={readOnly}
+                                      onClick={() => {
+                                        if (readOnly) return;
+                                        onViewTask(task);
+                                      }}
+                                      className="flex-1 min-w-0 text-left flex items-center gap-2 disabled:opacity-60"
                                     >
                                       <Badge
                                         variant={getStatusBadgeVariant(
@@ -494,11 +516,13 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                                     {onDeleteTask && (
                                       <button
                                         type="button"
+                                        disabled={readOnly}
                                         onClick={(e) => {
                                           e.stopPropagation();
+                                          if (readOnly) return;
                                           onDeleteTask(task.taskId, task.content);
                                         }}
-                                        className="shrink-0 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                        className="shrink-0 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-50"
                                         title="Xóa task"
                                       >
                                         <Trash2 className="h-3.5 w-3.5" />
@@ -513,7 +537,11 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                                   variant="outline"
                                   size="sm"
                                   className="w-full mt-2"
-                                  onClick={() => onAddTaskForDate(dateKey)}
+                                  disabled={readOnly}
+                                  onClick={() => {
+                                    if (readOnly) return;
+                                    onAddTaskForDate(dateKey);
+                                  }}
                                 >
                                   <Plus className="h-4 w-4 mr-1" />
                                   Add Task
@@ -559,6 +587,11 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
               </Button>
             </div>
             <div className="p-4 space-y-2">
+              {readOnly && (
+                <p className="text-xs text-muted-foreground border border-dashed rounded-md px-2 py-1.5 mb-2">
+                  Đang đồng bộ — không thể chỉnh sửa.
+                </p>
+              )}
               {dayTasksForSheet.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">
                   No tasks this day
@@ -571,11 +604,13 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                   >
                     <button
                       type="button"
+                      disabled={readOnly}
                       onClick={() => {
+                        if (readOnly) return;
                         onViewTask(task);
                         setMobileSheetDate(null);
                       }}
-                      className="flex-1 min-w-0 text-left flex items-center gap-2"
+                      className="flex-1 min-w-0 text-left flex items-center gap-2 disabled:opacity-60"
                     >
                       <Badge
                         variant={getStatusBadgeVariant(task.status)}
@@ -614,7 +649,9 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        disabled={readOnly}
                         onClick={() => {
+                          if (readOnly) return;
                           onDeleteTask(task.taskId, task.content);
                           setMobileSheetDate(null);
                         }}
@@ -632,7 +669,9 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                   variant="outline"
                   size="sm"
                   className="w-full"
+                  disabled={readOnly}
                   onClick={() => {
+                    if (readOnly) return;
                     onAddTaskForDate(mobileSheetDate);
                     setMobileSheetDate(null);
                   }}

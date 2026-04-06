@@ -9,6 +9,8 @@ interface TaskSummaryTablesProps {
   swimlanes: Swimlane[];
   onViewTask: (task: Task) => void;
   onDeleteTask: (taskId: string, content: string) => void;
+  /** When true, task actions are disabled while a task mutation is in progress. */
+  readOnly?: boolean;
 }
 
 const PAGE_SIZE = 20;
@@ -17,6 +19,7 @@ export const TaskSummaryTables: React.FC<TaskSummaryTablesProps> = ({
   swimlanes,
   onViewTask,
   onDeleteTask,
+  readOnly = false,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>("incomplete");
   const [donePage, setDonePage] = useState(1);
@@ -75,6 +78,11 @@ export const TaskSummaryTables: React.FC<TaskSummaryTablesProps> = ({
 
   return (
     <div className="space-y-6 mt-8">
+      {readOnly && (
+        <p className="text-sm text-muted-foreground rounded-md border border-dashed border-muted-foreground/30 bg-muted/40 px-3 py-2">
+          Đang đồng bộ task — tạm thời không chỉnh sửa.
+        </p>
+      )}
       <TaskTabs
         activeTab={activeTab}
         incompleteCount={incompleteTasks.length}
@@ -94,6 +102,7 @@ export const TaskSummaryTables: React.FC<TaskSummaryTablesProps> = ({
                 emptyMessage="No incomplete tasks."
                 onViewTask={onViewTask}
                 onDeleteTask={onDeleteTask}
+                readOnly={readOnly}
               />
               {incompleteTasks.length > PAGE_SIZE && (
                 <Pagination
@@ -120,6 +129,7 @@ export const TaskSummaryTables: React.FC<TaskSummaryTablesProps> = ({
                 emptyMessage="No completed tasks yet."
                 onViewTask={onViewTask}
                 onDeleteTask={onDeleteTask}
+                readOnly={readOnly}
               />
               {doneTasks.length > PAGE_SIZE && (
                 <Pagination
@@ -141,6 +151,7 @@ export const TaskSummaryTables: React.FC<TaskSummaryTablesProps> = ({
           swimlanes={swimlanes}
           onViewTask={onViewTask}
           onDeleteTask={onDeleteTask}
+          readOnly={readOnly}
         />
       )}
     </div>

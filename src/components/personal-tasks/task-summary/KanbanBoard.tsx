@@ -9,6 +9,7 @@ interface KanbanBoardProps {
   swimlanes: Swimlane[];
   onViewTask: (task: Task) => void;
   onDeleteTask: (taskId: string, content: string) => void;
+  readOnly?: boolean;
 }
 
 const getSwimlaneName = (swimlaneId: string, swimlanes: Swimlane[]): string => {
@@ -21,6 +22,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   swimlanes,
   onViewTask,
   onDeleteTask,
+  readOnly = false,
 }) => {
   return (
     <div className="space-y-4">
@@ -50,6 +52,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         swimlaneName={getSwimlaneName(task.swimlaneId, swimlanes)}
                         onViewTask={onViewTask}
                         onDeleteTask={onDeleteTask}
+                        readOnly={readOnly}
                       />
                     ))
                   )}

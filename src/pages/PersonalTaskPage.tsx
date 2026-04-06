@@ -28,6 +28,7 @@ import { TaskSummaryTables } from "@/components/personal-tasks/task-summary/Task
 import { TaskCalendarView } from "@/components/personal-tasks/task-summary/TaskCalendarView";
 import { TaskDetailDialog } from "@/components/personal-tasks/dialogs/TaskDetailDialog";
 import { PerformanceStats } from "@/components/personal-tasks/performance-stats/PerformanceStats";
+import { isOptimisticTaskId } from "@/components/personal-tasks/shared/utils";
 
 interface TableWeek {
   tableId: string;
@@ -827,6 +828,12 @@ const PersonalTaskPage: React.FC = () => {
     },
   });
 
+  const isTaskMutationPending =
+    createTaskMutation.isPending ||
+    updateTaskMutation.isPending ||
+    deleteTaskMutation.isPending ||
+    copyTaskMutation.isPending;
+
   const handleCreateTable = (
     startDate: string,
     week: number,
@@ -855,6 +862,14 @@ const PersonalTaskPage: React.FC = () => {
   };
 
   const handleCopyTask = (task: Task) => {
+    if (isTaskMutationPending) {
+      toast.message("Đang đồng bộ task, vui lòng đợi.");
+      return;
+    }
+    if (isOptimisticTaskId(task.taskId)) {
+      toast.message("Task đang được tạo, vui lòng đợi server xác nhận.");
+      return;
+    }
     copyTaskMutation.mutate(task);
   };
 
@@ -893,12 +908,20 @@ const PersonalTaskPage: React.FC = () => {
   };
 
   const handleAddTask = (swimlaneId: string, dayIndex: number) => {
+    if (isTaskMutationPending) {
+      toast.message("Đang đồng bộ task, vui lòng đợi.");
+      return;
+    }
     setAddTaskPresetDate(null);
     setEditingTask({ task: null, swimlaneId, dayIndex });
     setIsTaskDialogOpen(true);
   };
 
   const handleAddTaskForDate = (date: string) => {
+    if (isTaskMutationPending) {
+      toast.message("Đang đồng bộ task, vui lòng đợi.");
+      return;
+    }
     let targetTable: TableWithSwimlanes | null = null;
     let dayIndex = 0;
 
@@ -975,6 +998,14 @@ const PersonalTaskPage: React.FC = () => {
   };
 
   const handleEditTask = (task: Task, swimlaneId: string, dayIndex: number) => {
+    if (isTaskMutationPending) {
+      toast.message("Đang đồng bộ task, vui lòng đợi.");
+      return;
+    }
+    if (isOptimisticTaskId(task.taskId)) {
+      toast.message("Task đang được tạo, vui lòng đợi server xác nhận.");
+      return;
+    }
     setEditingTask({ task, swimlaneId, dayIndex });
     setIsTaskDialogOpen(true);
   };
@@ -993,6 +1024,17 @@ const PersonalTaskPage: React.FC = () => {
     difficulty?: "easy" | "medium" | "hard"
   ) => {
     if (!editingTask) return;
+    if (isTaskMutationPending) {
+      toast.message("Đang đồng bộ task, vui lòng đợi.");
+      return;
+    }
+    if (
+      editingTask.task &&
+      isOptimisticTaskId(editingTask.task.taskId)
+    ) {
+      toast.message("Task đang được tạo, vui lòng đợi server xác nhận.");
+      return;
+    }
 
     const detailValue = detail && detail.trim() ? detail.trim() : null;
     const checklistValue = checklist !== undefined ? checklist : null;
@@ -1086,6 +1128,14 @@ const PersonalTaskPage: React.FC = () => {
   };
 
   const handleDeleteTask = (taskId: string, taskContent: string) => {
+    if (isTaskMutationPending) {
+      toast.message("Đang đồng bộ task, vui lòng đợi.");
+      return;
+    }
+    if (isOptimisticTaskId(taskId)) {
+      toast.message("Task đang được tạo, vui lòng đợi server xác nhận.");
+      return;
+    }
     setTaskToDelete({
       taskId,
       content: taskContent,
@@ -1100,6 +1150,14 @@ const PersonalTaskPage: React.FC = () => {
   };
 
   const handleViewTask = (task: Task) => {
+    if (isTaskMutationPending) {
+      toast.message("Đang đồng bộ task, vui lòng đợi.");
+      return;
+    }
+    if (isOptimisticTaskId(task.taskId)) {
+      toast.message("Task đang được tạo, vui lòng đợi server xác nhận.");
+      return;
+    }
     setViewingTask(task);
     setIsTaskDetailOpen(true);
   };
@@ -1117,6 +1175,14 @@ const PersonalTaskPage: React.FC = () => {
     }> | null,
     difficulty?: "easy" | "medium" | "hard"
   ) => {
+    if (isTaskMutationPending) {
+      toast.message("Đang đồng bộ task, vui lòng đợi.");
+      return;
+    }
+    if (isOptimisticTaskId(taskId)) {
+      toast.message("Task đang được tạo, vui lòng đợi server xác nhận.");
+      return;
+    }
     const detailValue = detail && detail.trim() ? detail.trim() : null;
     const checklistValue = checklist !== undefined ? checklist : null;
     const difficultyValue = difficulty && ["easy", "medium", "hard"].includes(difficulty) ? difficulty : "medium";
@@ -1149,6 +1215,14 @@ const PersonalTaskPage: React.FC = () => {
     newTaskDate: string,
     newSwimlaneId?: string
   ) => {
+    if (isTaskMutationPending) {
+      toast.message("Đang đồng bộ task, vui lòng đợi.");
+      return;
+    }
+    if (isOptimisticTaskId(taskId)) {
+      toast.message("Task đang được tạo, vui lòng đợi server xác nhận.");
+      return;
+    }
     updateTaskMutation.mutate({
       taskId,
       taskDate: newTaskDate,
@@ -1409,11 +1483,13 @@ const PersonalTaskPage: React.FC = () => {
                   onDeleteTask={handleDeleteTask}
                   onMoveTask={handleMoveTask}
                   onCopyTask={handleCopyTask}
+                  readOnly={isTaskMutationPending}
                 />
                 <TaskSummaryTables
                   swimlanes={tableData.data.swimlanes}
                   onViewTask={handleViewTask}
                   onDeleteTask={handleDeleteTask}
+                  readOnly={isTaskMutationPending}
                 />
               </>
             ) : (
@@ -1422,6 +1498,7 @@ const PersonalTaskPage: React.FC = () => {
                 onViewTask={handleViewTask}
                 onDeleteTask={handleDeleteTask}
                 onAddTaskForDate={handleAddTaskForDate}
+                readOnly={isTaskMutationPending}
               />
             )}
 
@@ -1441,6 +1518,7 @@ const PersonalTaskPage: React.FC = () => {
         open={isTaskDialogOpen}
         onOpenChange={handleTaskDialogOpenChange}
         onSave={handleSaveTask}
+        isBusy={isTaskMutationPending}
       />
 
       <DeleteTableDialog
@@ -1493,7 +1571,7 @@ const PersonalTaskPage: React.FC = () => {
         open={isTaskDetailOpen}
         onOpenChange={setIsTaskDetailOpen}
         onSave={handleSaveTaskDetail}
-        isLoading={updateTaskMutation.isPending}
+        isLoading={isTaskMutationPending}
       />
     </div>
   );

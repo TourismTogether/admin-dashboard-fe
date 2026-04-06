@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +28,8 @@ interface TaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (content: string, status: string, priority: string, taskDate: string, detail?: string, checklist?: ChecklistItem[] | null, difficulty?: TaskDifficulty) => void;
+  /** When true, form is disabled (e.g. task mutation in progress). */
+  isBusy?: boolean;
 }
 
 export const TaskDialog: React.FC<TaskDialogProps> = ({
@@ -36,7 +38,9 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
   open,
   onOpenChange,
   onSave,
+  isBusy = false,
 }) => {
+  const contentInputRef = useRef<HTMLInputElement>(null);
   const [content, setContent] = useState("");
   const [status, setStatus] = useState("todo");
   const [priority, setPriority] = useState("medium");
@@ -104,6 +108,7 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isBusy) return;
     if (!content.trim()) return;
     const validChecklist = checklist.filter(item => item.description.trim());
     const detailValue = detail.trim() ? detail.trim() : null;
@@ -113,7 +118,13 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="max-h-[90vh] overflow-y-auto"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          requestAnimationFrame(() => contentInputRef.current?.focus());
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{task ? "Edit Task" : "Create Task"}</DialogTitle>
           <DialogDescription>
@@ -123,19 +134,30 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {isBusy && (
+            <p className="text-sm text-muted-foreground rounded-md border border-dashed border-muted-foreground/30 bg-muted/40 px-3 py-2">
+              Đang đồng bộ — không thể chỉnh sửa.
+            </p>
+          )}
+          <fieldset
+            disabled={isBusy}
+            className="space-y-4 min-w-0 border-0 p-0 m-0 disabled:opacity-80"
+          >
           {taskDate && (
             <div className="space-y-2">
               <Label>Due date</Label>
-              <Input
-                value={format(parseISO(taskDate), "MMM d, yyyy")}
-                readOnly
-                className="bg-muted"
-              />
+              <div
+                className="flex h-9 w-full items-center rounded-md border border-input bg-muted px-3 py-2 text-sm text-foreground"
+                aria-readonly
+              >
+                {format(parseISO(taskDate), "MMM d, yyyy")}
+              </div>
             </div>
           )}
           <div className="space-y-2">
             <Label htmlFor="task-content">Content</Label>
             <Input
+              ref={contentInputRef}
               id="task-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -245,11 +267,14 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
               )}
             </div>
           </div>
+          </fieldset>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit" disabled={isBusy}>
+              {isBusy ? "Đang lưu…" : "Save"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

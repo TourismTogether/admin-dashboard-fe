@@ -20,6 +20,7 @@ interface TasksTableProps {
   emptyMessage: string;
   onViewTask: (task: Task) => void;
   onDeleteTask: (taskId: string, content: string) => void;
+  readOnly?: boolean;
 }
 
 const getSwimlaneName = (swimlaneId: string, swimlanes: Swimlane[]): string => {
@@ -33,6 +34,7 @@ export const TasksTable: React.FC<TasksTableProps> = ({
   emptyMessage,
   onViewTask,
   onDeleteTask,
+  readOnly = false,
 }) => {
   return (
     <div className="w-full overflow-x-auto rounded-lg border">
@@ -84,7 +86,11 @@ export const TasksTable: React.FC<TasksTableProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onViewTask(task)}
+                      disabled={readOnly}
+                      onClick={() => {
+                        if (readOnly) return;
+                        onViewTask(task);
+                      }}
                       className="h-8 px-2"
                     >
                       <Eye className="h-4 w-4 mr-1" />
@@ -93,7 +99,11 @@ export const TasksTable: React.FC<TasksTableProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onDeleteTask(task.taskId, task.content)}
+                      disabled={readOnly}
+                      onClick={() => {
+                        if (readOnly) return;
+                        onDeleteTask(task.taskId, task.content);
+                      }}
                       className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 className="h-4 w-4" />
