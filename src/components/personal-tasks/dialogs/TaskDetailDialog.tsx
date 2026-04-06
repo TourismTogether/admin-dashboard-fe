@@ -26,7 +26,15 @@ interface TaskDetailDialogProps {
   task: Task | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (taskId: string, content: string, status: string, priority: string, detail?: string, checklist?: ChecklistItem[] | null, difficulty?: TaskDifficulty) => void;
+  onSave: (
+    taskId: string,
+    content: string,
+    status: string,
+    priority: string,
+    detail?: string,
+    checklist?: ChecklistItem[] | null,
+    difficulty?: TaskDifficulty,
+  ) => void;
   isLoading?: boolean;
 }
 
@@ -75,7 +83,11 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
       setContent(task.content);
       setStatus(task.status);
       setPriority(task.priority);
-      setDifficulty((task.difficulty && ["easy", "medium", "hard"].includes(task.difficulty) ? task.difficulty : "medium") as TaskDifficulty);
+      setDifficulty(
+        (task.difficulty && ["easy", "medium", "hard"].includes(task.difficulty)
+          ? task.difficulty
+          : "medium") as TaskDifficulty,
+      );
       setDetail(task.detail || "");
       const loadedChecklist = task.checklist ? [...task.checklist] : [];
       setChecklist(ensureChecklistIds(loadedChecklist));
@@ -90,26 +102,43 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
   }, [task, open]);
 
   const handleAddChecklistItem = () => {
-    setChecklist((prev) => [...prev, { id: generateChecklistId(), description: "", isComplete: false }]);
+    setChecklist((prev) => [
+      ...prev,
+      { id: generateChecklistId(), description: "", isComplete: false },
+    ]);
   };
 
   const handleRemoveChecklistItem = (id: string) => {
     setChecklist((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const handleChecklistItemChange = (id: string, field: keyof ChecklistItem, value: string | boolean) => {
+  const handleChecklistItemChange = (
+    id: string,
+    field: keyof ChecklistItem,
+    value: string | boolean,
+  ) => {
     setChecklist((prev) => {
-      return prev.map((item) => (item.id === id ? { ...item, [field]: value } : item));
+      return prev.map((item) =>
+        item.id === id ? { ...item, [field]: value } : item,
+      );
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim() || !task) return;
-    const validChecklist = checklist.filter(item => item.description.trim());
+    const validChecklist = checklist.filter((item) => item.description.trim());
     const detailValue = detail.trim() ? detail.trim() : null;
     const checklistValue = validChecklist.length > 0 ? validChecklist : null;
-    onSave(task.taskId, content, status, priority, detailValue || undefined, checklistValue, difficulty);
+    onSave(
+      task.taskId,
+      content,
+      status,
+      priority,
+      detailValue || undefined,
+      checklistValue,
+      difficulty,
+    );
   };
 
   if (!task) return null;
@@ -197,11 +226,15 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
               <select
                 id="task-detail-difficulty"
                 value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value as TaskDifficulty)}
+                onChange={(e) =>
+                  setDifficulty(e.target.value as TaskDifficulty)
+                }
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
               >
                 {DIFFICULTY_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -239,13 +272,21 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
                     <Checkbox
                       checked={item.isComplete}
                       onCheckedChange={(checked: boolean) =>
-                        handleChecklistItemChange(item.id, "isComplete", checked)
+                        handleChecklistItemChange(
+                          item.id,
+                          "isComplete",
+                          checked,
+                        )
                       }
                     />
                     <Input
                       value={item.description}
                       onChange={(e) =>
-                        handleChecklistItemChange(item.id, "description", e.target.value)
+                        handleChecklistItemChange(
+                          item.id,
+                          "description",
+                          e.target.value,
+                        )
                       }
                       placeholder="Checklist item..."
                       className="flex-1"
@@ -269,7 +310,7 @@ export const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="border-border pt-4">
             <Button
               type="button"
               variant="outline"
