@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   addDays,
   endOfMonth,
@@ -109,6 +115,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
   const [activeTab, setActiveTab] = useState<"all" | "incomplete" | "done">(
     "incomplete",
   );
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
   const allTabRef = useRef<HTMLButtonElement>(null);
   const incompleteTabRef = useRef<HTMLButtonElement>(null);
   const doneTabRef = useRef<HTMLButtonElement>(null);
@@ -152,23 +159,41 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
     return { tasksByDate: map, incompleteCount: incomplete, doneCount: done };
   }, [allTasks, currentMonth, activeTab]);
 
-  useEffect(() => {
-    const update = () => {
-      const ref =
-        activeTab === "all"
-          ? allTabRef
-          : activeTab === "incomplete"
+  const updateTabIndicator = useCallback(() => {
+    const container = tabsContainerRef.current;
+    const tabRef =
+      activeTab === "all"
+        ? allTabRef
+        : activeTab === "incomplete"
           ? incompleteTabRef
           : doneTabRef;
-      if (ref.current) {
-        const { offsetLeft, offsetWidth } = ref.current;
-        setTabIndicator({ left: offsetLeft, width: offsetWidth });
-      }
+    const btn = tabRef.current;
+    if (!container || !btn) return;
+    const cr = container.getBoundingClientRect();
+    const br = btn.getBoundingClientRect();
+    setTabIndicator({ left: br.left - cr.left, width: br.width });
+  }, [activeTab]);
+
+  useLayoutEffect(() => {
+    updateTabIndicator();
+    window.addEventListener("resize", updateTabIndicator);
+    const el = tabsContainerRef.current;
+    const ro =
+      typeof ResizeObserver !== "undefined" && el
+        ? new ResizeObserver(() => updateTabIndicator())
+        : null;
+    if (el && ro) ro.observe(el);
+    return () => {
+      window.removeEventListener("resize", updateTabIndicator);
+      ro?.disconnect();
     };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, [activeTab, incompleteCount, doneCount]);
+  }, [
+    updateTabIndicator,
+    incompleteCount,
+    doneCount,
+    currentMonth,
+    swimlanes.length,
+  ]);
 
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
@@ -238,18 +263,14 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
       </div>
 
       {/* Tabs: All | Incomplete | Done (giống table view, theo tháng) */}
-      <div className="border-b relative">
-        <div className="flex gap-2 relative">
-          <div
-            className="absolute bottom-0 h-0.5 bg-primary transition-all duration-300 ease-in-out rounded-full"
-            style={{ left: tabIndicator.left, width: tabIndicator.width }}
-          />
+      <div className="relative border-b">
+        <div ref={tabsContainerRef} className="relative flex gap-2">
           <button
             ref={allTabRef}
             type="button"
             onClick={() => setActiveTab("all")}
             className={cn(
-              "relative px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out",
+              "relative z-0 px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out",
               "border-b-2 border-transparent",
               activeTab === "all"
                 ? "text-primary"
@@ -263,7 +284,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
             type="button"
             onClick={() => setActiveTab("incomplete")}
             className={cn(
-              "relative px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out",
+              "relative z-0 px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out",
               "border-b-2 border-transparent",
               activeTab === "incomplete"
                 ? "text-primary"
@@ -277,7 +298,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
             type="button"
             onClick={() => setActiveTab("done")}
             className={cn(
-              "relative px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out",
+              "relative z-0 px-4 py-2 text-sm font-medium transition-all duration-300 ease-in-out",
               "border-b-2 border-transparent",
               activeTab === "done"
                 ? "text-primary"
@@ -286,6 +307,11 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
           >
             Done ({doneCount})
           </button>
+          {/* After buttons in DOM + z-10 so the bar is not covered by tab hit targets */}
+          <div
+            className="pointer-events-none absolute bottom-0 z-10 h-[3px] rounded-full bg-primary transition-[left,width] duration-300 ease-in-out"
+            style={{ left: tabIndicator.left, width: tabIndicator.width }}
+          />
         </div>
       </div>
 

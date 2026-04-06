@@ -20,6 +20,8 @@ import {
   WeekTable,
   type SwimlaneEditPayload,
 } from "@/components/personal-tasks/tables/WeekTable";
+import { WeekTableSkeleton } from "@/components/personal-tasks/tables/WeekTableSkeleton";
+import { TaskCalendarSkeleton } from "@/components/personal-tasks/task-summary/TaskCalendarSkeleton";
 import { DeleteTableDialog } from "@/components/personal-tasks/dialogs/DeleteTableDialog";
 import { ShareTableDialog } from "@/components/personal-tasks/dialogs/ShareTableDialog";
 import { DeleteSwimlaneDialog } from "@/components/personal-tasks/dialogs/DeleteSwimlaneDialog";
@@ -228,7 +230,7 @@ const PersonalTaskPage: React.FC = () => {
   // Fetch all tables with swimlanes and tasks for calendar view (month overview)
   const {
     data: allTablesWithSwimlanes,
-    isFetching: isFetchingAllTables,
+    isPending: isPendingCalendarTables,
   } = useQuery<TableWithSwimlanes[]>({
     queryKey: ["personal-tasks", "tables-with-swimlanes"],
     queryFn: async () => {
@@ -260,17 +262,25 @@ const PersonalTaskPage: React.FC = () => {
 
   const hasCurrentTable = !!tableData?.data;
 
-  // View loading skeletons:
-  // - Show only on first load (no data yet)
-  // - Keep existing data visible during background refetches (better UX for mutations)
-  const hasCalendarData = calendarSwimlanes.length > 0;
+  const tableDataMatchesSelection =
+    selectedTableId != null &&
+    tableData?.data?.tableId === selectedTableId;
+
+  // View loading skeletons: show while the selected table’s data is not yet shown.
+  // When data matches selection, hide skeleton even if a background refetch runs.
   const isViewLoading =
     (tasksViewMode === "table" &&
-      !hasCurrentTable &&
+      selectedTableId != null &&
+      !tableDataMatchesSelection &&
       (isLoadingTableData || isFetchingTableData)) ||
     (tasksViewMode === "calendar" &&
-      !hasCalendarData &&
-      isFetchingAllTables);
+      !!tablesData?.data?.length &&
+      isPendingCalendarTables);
+
+  const showTasksSection =
+    (tasksViewMode === "table" && selectedTableId != null) ||
+    (tasksViewMode === "calendar" &&
+      (calendarSwimlanes.length > 0 || isViewLoading));
 
   // Create table mutation
   const createTableMutation = useMutation({
@@ -1444,9 +1454,7 @@ const PersonalTaskPage: React.FC = () => {
         )}
       </div>
 
-      {(hasCurrentTable ||
-        (tasksViewMode === "calendar" &&
-          (calendarSwimlanes.length > 0 || isViewLoading))) && (
+      {showTasksSection && (
         <>
           {hasCurrentTable && (
             <CreateSwimlaneDialog
@@ -1464,11 +1472,11 @@ const PersonalTaskPage: React.FC = () => {
             )}
 
             {isViewLoading ? (
-              <div className="space-y-3">
-                <div className="h-6 w-32 bg-muted rounded-md animate-pulse" />
-                <div className="h-40 bg-muted rounded-md animate-pulse" />
-                <div className="h-64 bg-muted rounded-md animate-pulse" />
-              </div>
+              tasksViewMode === "table" ? (
+                <WeekTableSkeleton />
+              ) : (
+                <TaskCalendarSkeleton />
+              )
             ) : tasksViewMode === "table" && hasCurrentTable ? (
               <>
                 <WeekTable
