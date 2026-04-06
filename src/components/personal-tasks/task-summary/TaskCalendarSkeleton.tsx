@@ -1,5 +1,3 @@
-import React from "react";
-
 /** Loading placeholder matching TaskCalendarView (nav, tabs, month grid). */
 export function TaskCalendarSkeleton() {
   return (

@@ -1,5 +1,3 @@
-import React from "react";
-
 /** Loading placeholder matching WeekTable layout (week header + grid). */
 export function WeekTableSkeleton() {
   return (
