@@ -22,6 +22,8 @@ import SelfStudyPage from "./pages/SelfStudyPage";
 import SettingsPage from "./pages/SettingsPage";
 import BrainstormPage from "./pages/BrainstormPage";
 import AdminFeedbackPage from "./pages/AdminFeedbackPage";
+import EventsPage from "./pages/EventsPage";
+import AdminEventsPage from "./pages/AdminEventsPage";
 import ShareTablePage from "./pages/ShareTablePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -109,6 +111,24 @@ const router = createBrowserRouter([
             element: (
               <ProtectedRoute>
                 <BrainstormPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "events",
+            element: (
+              <ProtectedRoute>
+                <EventsPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "admin/events",
+            element: (
+              <ProtectedRoute>
+                <AdminRoute>
+                  <AdminEventsPage />
+                </AdminRoute>
               </ProtectedRoute>
             ),
           },

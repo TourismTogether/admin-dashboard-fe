@@ -7,7 +7,7 @@ import { logout, selectAuthUser, selectAuthToken, setUser } from "@/store/authSl
 import type { AppDispatch } from "@/store/store";
 import { apiRequest } from "@/lib/api";
 
-const baseNavItems = [
+const mainNavItems = [
   { path: "/personal-tasks", label: "Personal Tasks" },
   { path: "/group-tasks", label: "Group Tasks" },
   { path: "/portfolio", label: "Portfolio" },
@@ -15,8 +15,12 @@ const baseNavItems = [
   { path: "/brainstorm", label: "Brainstorm" },
   { path: "/settings", label: "Settings" },
 ];
+const eventNavItem = { path: "/events", label: "Events" };
 
-const adminExtraNavItems = [{ path: "/admin/feedback", label: "Feedback" }];
+const adminExtraNavItems = [
+  { path: "/admin/events", label: "Create Event" },
+  { path: "/admin/feedback", label: "Feedback" },
+];
 
 const SIDEBAR_WIDTH = 256; // w-64 = 16rem = 256px
 
@@ -93,7 +97,7 @@ const DashboardLayout: React.FC = () => {
             </div>
           )}
           <nav className="grow space-y-1 overflow-y-auto">
-            {baseNavItems.map((item) => (
+            {mainNavItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
@@ -107,6 +111,18 @@ const DashboardLayout: React.FC = () => {
                 {item.label}
               </Link>
             ))}
+            <div className="my-3 border-t border-border" />
+            <Link
+              to={eventNavItem.path}
+              onClick={closeSidebar}
+              className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                location.pathname === eventNavItem.path
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+              }`}
+            >
+              {eventNavItem.label}
+            </Link>
             {isAdmin && (
               <>
                 <div className="my-3 border-t border-border" />
