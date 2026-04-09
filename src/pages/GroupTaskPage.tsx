@@ -575,7 +575,7 @@ const GroupTaskPage: React.FC = () => {
   }
 
   const selectedGroup = groupsData?.data?.find((group) => group.groupId === selectedGroupId);
-  const meetingTaskId = viewTaskId ?? tasksData?.data?.[0]?.groupTaskId ?? "";
+  const meetingTaskId = viewTaskId ?? tasksData?.data?.[0]?.groupTaskId ?? `group-${selectedGroupId ?? "general"}`;
   const openedMeetingId = activeMeetingId;
 
   return (
@@ -715,10 +715,11 @@ const GroupTaskPage: React.FC = () => {
                   <CreateMeetingDialog
                     groupTaskId={meetingTaskId}
                     groupId={selectedGroupId}
-                    disabled={!meetingTaskId}
-                    onMeetingCreated={(meetingId, meetingTitle) => {
+                    disabled={false}
+                    onMeetingCreated={(meetingId, meetingTitle, meetingCode) => {
                       setActiveMeetingId(meetingId);
                       setActiveMeetingTitle(meetingTitle);
+                      toast.message(`Meeting code: ${meetingCode}`);
                     }}
                   />
                   <JoinMeetingDialog

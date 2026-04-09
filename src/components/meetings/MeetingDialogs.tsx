@@ -20,7 +20,7 @@ interface CreateMeetingDialogProps {
   groupTaskId: string;
   groupId: string;
   disabled?: boolean;
-  onMeetingCreated: (meetingId: string, meetingTitle: string) => void;
+  onMeetingCreated: (meetingId: string, meetingTitle: string, meetingCode: string) => void;
 }
 
 export const CreateMeetingDialog: React.FC<CreateMeetingDialogProps> = ({
@@ -42,10 +42,23 @@ export const CreateMeetingDialog: React.FC<CreateMeetingDialogProps> = ({
     }) => createMeeting(data),
     onSuccess: (meeting) => {
       toast.success("Meeting created successfully");
+      toast.message(`Meeting code: ${meeting.meetingCode}`, {
+        action: {
+          label: "Copy",
+          onClick: async () => {
+            try {
+              await navigator.clipboard.writeText(meeting.meetingCode);
+              toast.success("Meeting code copied");
+            } catch {
+              toast.error("Failed to copy meeting code");
+            }
+          },
+        },
+      });
       setOpen(false);
       setTitle("");
       setDescription("");
-      onMeetingCreated(meeting.meetingId, meeting.title);
+      onMeetingCreated(meeting.meetingId, meeting.title, meeting.meetingCode);
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to create meeting");
