@@ -24,6 +24,9 @@ import { GroupTaskTimelineView } from "@/components/group-tasks/GroupTaskTimelin
 import { GroupTaskWeekTable } from "@/components/group-tasks/GroupTaskWeekTable";
 import { GroupTasksTable } from "@/components/group-tasks/GroupTasksTable";
 import { GroupsList } from "@/components/group-tasks/GroupsList";
+import { CreateMeetingDialog, JoinMeetingDialog } from "@/components/meetings/MeetingDialogs";
+import { MeetingHistoryDialog } from "@/components/meetings/MeetingHistoryDialog";
+import { MeetingRoom } from "@/components/meetings/MeetingRoom";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api";
 import { useNavigate, useParams } from "react-router-dom";
@@ -104,6 +107,8 @@ const GroupTaskPage: React.FC = () => {
   const [groupToDeleteId, setGroupToDeleteId] = useState<string | null>(null);
   const [kickMemberId, setKickMemberId] = useState<string | null>(null);
   const [isLeaveGroupDialogOpen, setIsLeaveGroupDialogOpen] = useState(false);
+  const [activeMeetingId, setActiveMeetingId] = useState<string | null>(null);
+  const [activeMeetingTitle, setActiveMeetingTitle] = useState("");
   const [taskSearchQuery, setTaskSearchQuery] = useState("");
   const [taskSortBy, setTaskSortBy] = useState<string>("start_desc");
   const [taskPage, setTaskPage] = useState(0);
@@ -570,6 +575,8 @@ const GroupTaskPage: React.FC = () => {
   }
 
   const selectedGroup = groupsData?.data?.find((group) => group.groupId === selectedGroupId);
+  const meetingTaskId = viewTaskId ?? tasksData?.data?.[0]?.groupTaskId ?? `group-${selectedGroupId ?? "general"}`;
+  const openedMeetingId = activeMeetingId;
 
   return (
     <div className="p-2 sm:p-4 md:p-6 space-y-4">
@@ -705,6 +712,23 @@ const GroupTaskPage: React.FC = () => {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
+                  <CreateMeetingDialog
+                    groupTaskId={meetingTaskId}
+                    groupId={selectedGroupId}
+                    disabled={false}
+                    onMeetingCreated={(meetingId, meetingTitle, meetingCode) => {
+                      setActiveMeetingId(meetingId);
+                      setActiveMeetingTitle(meetingTitle);
+                      toast.message(`Meeting code: ${meetingCode}`);
+                    }}
+                  />
+                  <JoinMeetingDialog
+                    onMeetingJoined={(meetingId, meetingTitle) => {
+                      setActiveMeetingId(meetingId);
+                      setActiveMeetingTitle(meetingTitle);
+                    }}
+                  />
+                  <MeetingHistoryDialog groupId={selectedGroupId} />
                   {selectedGroup?.role === "owner" && (
                     <Dialog
                       open={isEditGroupOpen}
@@ -1256,6 +1280,7 @@ const GroupTaskPage: React.FC = () => {
                           </div>
                         )}
                       </div>
+
                     )
                   ) : activeTab === "timeline" ? (
                     isLoadingTasks ? (
@@ -1283,6 +1308,14 @@ const GroupTaskPage: React.FC = () => {
             </div>
           )}
         </section>
+
+      {openedMeetingId ? (
+        <MeetingRoom
+          meetingId={openedMeetingId}
+          title={activeMeetingTitle || selectedGroup?.name || "Meeting"}
+          onClose={() => setActiveMeetingId(null)}
+        />
+      ) : null}
 
       {/* View Task Dialog - standalone */}
       <Dialog
@@ -1357,6 +1390,7 @@ const GroupTaskPage: React.FC = () => {
                 </div>
               </div>
             );
+
           })()}
         </DialogContent>
       </Dialog>
