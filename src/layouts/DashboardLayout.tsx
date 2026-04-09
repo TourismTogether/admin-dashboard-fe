@@ -16,6 +16,8 @@ const baseNavItems = [
   { path: "/settings", label: "Settings" },
 ];
 
+const adminExtraNavItems = [{ path: "/admin/feedback", label: "Feedback" }];
+
 const SIDEBAR_WIDTH = 256; // w-64 = 16rem = 256px
 
 const DashboardLayout: React.FC = () => {
@@ -29,7 +31,7 @@ const DashboardLayout: React.FC = () => {
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
 
   useEffect(() => {
-    if (!token || user) return;
+    if (!token) return;
     apiRequest("/api/auth/me")
       .then((res) => {
         if (res.ok) return res.json();
@@ -39,17 +41,14 @@ const DashboardLayout: React.FC = () => {
         if (data?.user) dispatch(setUser(data.user));
       })
       .catch(() => {});
-  }, [token, user, dispatch]);
+  }, [token, dispatch]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
     closeSidebar();
   }, [location.pathname, closeSidebar]);
 
-  const navItems =
-    user?.isAdmin === true
-      ? [...baseNavItems, { path: "/admin/feedback", label: "Bug Reports" }]
-      : baseNavItems;
+  const isAdmin = user?.isAdmin === true;
 
   const handleLogout = () => {
     dispatch(logout());
@@ -94,7 +93,7 @@ const DashboardLayout: React.FC = () => {
             </div>
           )}
           <nav className="grow space-y-1 overflow-y-auto">
-            {navItems.map((item) => (
+            {baseNavItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
@@ -108,6 +107,25 @@ const DashboardLayout: React.FC = () => {
                 {item.label}
               </Link>
             ))}
+            {isAdmin && (
+              <>
+                <div className="my-3 border-t border-border" />
+                {adminExtraNavItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={closeSidebar}
+                    className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      location.pathname === item.path
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </>
+            )}
           </nav>
           <Button
             onClick={handleLogout}
