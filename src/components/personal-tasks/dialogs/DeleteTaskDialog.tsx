@@ -68,7 +68,7 @@ export const DeleteTaskDialog: React.FC<DeleteTaskDialogProps> = ({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2 sm:gap-2">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}

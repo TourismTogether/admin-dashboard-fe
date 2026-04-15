@@ -163,11 +163,6 @@ export const TaskDialog: React.FC<TaskDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {isBusy && (
-            <p className="text-sm text-muted-foreground rounded-md border border-dashed border-muted-foreground/30 bg-muted/40 px-3 py-2">
-              Đang đồng bộ — không thể chỉnh sửa.
-            </p>
-          )}
           <fieldset
             disabled={isBusy}
             className="space-y-4 min-w-0 border-0 p-0 m-0 disabled:opacity-80"

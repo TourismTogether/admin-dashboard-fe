@@ -158,11 +158,6 @@ export const WeekTable: React.FC<WeekTableProps> = ({
 
   return (
     <div className={cn("space-y-4", readOnly && "relative")}>
-      {readOnly && (
-        <p className="text-sm text-muted-foreground rounded-md border border-dashed border-muted-foreground/30 bg-muted/40 px-3 py-2">
-          Đang đồng bộ task — tạm thời không chỉnh sửa.
-        </p>
-      )}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold">

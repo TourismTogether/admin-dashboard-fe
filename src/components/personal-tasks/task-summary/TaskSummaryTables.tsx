@@ -78,11 +78,6 @@ export const TaskSummaryTables: React.FC<TaskSummaryTablesProps> = ({
 
   return (
     <div className="space-y-6 mt-8">
-      {readOnly && (
-        <p className="text-sm text-muted-foreground rounded-md border border-dashed border-muted-foreground/30 bg-muted/40 px-3 py-2">
-          Đang đồng bộ task — tạm thời không chỉnh sửa.
-        </p>
-      )}
       <TaskTabs
         activeTab={activeTab}
         incompleteCount={incompleteTasks.length}

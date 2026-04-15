@@ -221,11 +221,6 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
 
   return (
     <div className="w-full space-y-4">
-      {readOnly && (
-        <p className="text-sm text-muted-foreground rounded-md border border-dashed border-muted-foreground/30 bg-muted/40 px-3 py-2">
-          Đang đồng bộ task — tạm thời không chỉnh sửa.
-        </p>
-      )}
       {/* Header: < | Month Year | > + Today */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1">
@@ -613,11 +608,6 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
               </Button>
             </div>
             <div className="p-4 space-y-2">
-              {readOnly && (
-                <p className="text-xs text-muted-foreground border border-dashed rounded-md px-2 py-1.5 mb-2">
-                  Đang đồng bộ — không thể chỉnh sửa.
-                </p>
-              )}
               {dayTasksForSheet.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">
                   No tasks this day
