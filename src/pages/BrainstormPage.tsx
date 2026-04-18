@@ -592,7 +592,7 @@ const BrainstormPage: React.FC = () => {
               </p>
             </div>
           )}
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setDeleteConfirmItem(null)}

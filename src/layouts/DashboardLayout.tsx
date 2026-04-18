@@ -13,6 +13,7 @@ const mainNavItems = [
   { path: "/portfolio", label: "Portfolio" },
   { path: "/leaderboard", label: "Leaderboard" },
   { path: "/brainstorm", label: "Brainstorm" },
+  { path: "/take-note", label: "Take note" },
   { path: "/settings", label: "Settings" },
 ];
 const eventNavItem = { path: "/events", label: "Events" };

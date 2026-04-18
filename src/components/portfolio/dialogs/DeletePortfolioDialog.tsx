@@ -64,7 +64,7 @@ export const DeletePortfolioDialog: React.FC<DeletePortfolioDialogProps> = ({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter>
           <Button
             variant="outline"
             onClick={() => setOpen(false)}
