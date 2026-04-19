@@ -26,7 +26,7 @@ export interface GroupTaskForTable {
 const priorityStyles: Record<string, string> = {
   high: "border-red-200 bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
   medium: "border-amber-200 bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800",
-  low: "border-slate-200 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600",
+  low: "border-border bg-muted text-foreground dark:bg-muted dark:text-foreground dark:border-border",
 };
 
 function getPriorityClassName(priority: string): string {
@@ -36,7 +36,7 @@ function getPriorityClassName(priority: string): string {
 const statusStyles: Record<string, string> = {
   done: "border-emerald-200 bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800",
   in_progress: "border-blue-200 bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800",
-  todo: "border-slate-200 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-600",
+  todo: "border-border bg-muted/80 text-muted-foreground dark:bg-muted/80 dark:text-muted-foreground dark:border-border",
   reopen: "border-orange-200 bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800",
   delay: "border-red-200 bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
 };

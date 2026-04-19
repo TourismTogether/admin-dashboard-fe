@@ -99,7 +99,7 @@ function getPriorityDotColor(priority: string): string {
     case "medium":
       return "bg-amber-500";
     default:
-      return "bg-gray-400";
+      return "bg-primary/45";
   }
 }
 
@@ -312,14 +312,14 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
 
       {/* Grid: 100% width, 7 equal columns */}
       <div className="w-full overflow-x-auto">
-        <div className="w-full min-w-0 grid grid-cols-7 gap-0 border border-gray-100 rounded-lg overflow-hidden">
+        <div className="w-full min-w-0 grid grid-cols-7 gap-0 border border-border rounded-lg overflow-hidden">
           {/* Day headers: full label on sm+, single letter on mobile */}
           {WEEKDAY_LABELS.map((label, i) => (
             <div
               key={label + i}
               className={cn(
-                "bg-muted/50 px-0.5 py-2 text-center text-xs font-medium text-muted-foreground border-b border-gray-100",
-                i >= 5 && "bg-gray-50"
+                "bg-muted/50 px-0.5 py-2 text-center text-xs font-medium text-muted-foreground border-b border-border",
+                i >= 5 && "bg-muted/40"
               )}
             >
               <span className="hidden sm:inline">{label}</span>
@@ -340,10 +340,10 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                 <div
                   key={`${weekIndex}-${dayIndex}`}
                   className={cn(
-                    "flex flex-col min-w-0 border border-gray-100",
+                    "flex flex-col min-w-0 border border-border",
                     "h-16 min-h-16 max-h-16 md:h-[110px] md:min-h-[110px] md:max-h-[110px] lg:h-[140px] lg:min-h-[140px] lg:max-h-[140px]",
                     isToday && "bg-green-100",
-                    isWeekend && "bg-gray-50/80"
+                    isWeekend && "bg-muted/35"
                   )}
                 >
                   <div className="flex flex-col flex-1 min-h-0 p-1 group/cell h-full">
@@ -355,7 +355,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                           "text-[11px] sm:text-sm",
                           isToday && "font-bold text-green-700",
                           isCurrentMonth && !isToday && "text-foreground",
-                          !isCurrentMonth && "text-gray-300"
+                          !isCurrentMonth && "text-muted-foreground/35"
                         )}
                       >
                         {format(date, "d")}
@@ -370,7 +370,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                             onAddTaskForDate(dateKey);
                           }}
                           className={cn(
-                            "w-5 h-5 shrink-0 rounded-full flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-600 hover:text-gray-800 transition-opacity",
+                            "w-5 h-5 shrink-0 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:bg-primary/20 hover:text-primary transition-opacity",
                             "opacity-100 sm:opacity-0 sm:group-hover/cell:opacity-100",
                             readOnly && "opacity-40 pointer-events-none"
                           )}
@@ -592,8 +592,8 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
             onClick={() => setMobileSheetDate(null)}
             aria-hidden
           />
-          <div className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-lg border border-gray-100 bg-background shadow-lg sm:hidden">
-            <div className="sticky top-0 flex items-center justify-between border-b border-gray-100 bg-background px-4 py-3">
+          <div className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-lg border border-border bg-background shadow-lg sm:hidden">
+            <div className="sticky top-0 flex items-center justify-between border-b border-border bg-background px-4 py-3">
               <span className="text-sm font-medium">
                 {format(parseISO(mobileSheetDate), "EEE, MMM d, yyyy")}
               </span>
@@ -616,7 +616,7 @@ export const TaskCalendarView: React.FC<TaskCalendarViewProps> = ({
                 dayTasksForSheet.map((task) => (
                   <div
                     key={task.taskId}
-                    className="flex items-center gap-2 rounded-lg border border-gray-100 p-3 hover:bg-accent"
+                    className="flex items-center gap-2 rounded-lg border border-border p-3 hover:bg-accent"
                   >
                     <button
                       type="button"

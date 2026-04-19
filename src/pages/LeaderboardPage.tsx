@@ -40,7 +40,7 @@ const getRankBadgeVariant = (
 
 const getMedalBadgeClass = (rank: number): string => {
   if (rank === 1) return "border-yellow-400 bg-yellow-100 text-yellow-900";
-  if (rank === 2) return "border-slate-400 bg-slate-100 text-slate-900";
+  if (rank === 2) return "border-border bg-muted text-foreground";
   if (rank === 3) return "border-amber-700 bg-amber-100 text-amber-900";
   return "";
 };

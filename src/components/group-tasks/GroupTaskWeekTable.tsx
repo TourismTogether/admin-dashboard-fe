@@ -49,7 +49,7 @@ export const GroupTaskWeekTable: React.FC<GroupTaskWeekTableProps> = ({
   onTaskClick,
   onEdit,
   onDelete,
-  getStatusStyles = () => "bg-gray-100 text-gray-800",
+  getStatusStyles = () => "bg-muted text-foreground",
 }) => {
   const [weekOffset, setWeekOffset] = useState(0);
   const weekStart = useMemo(

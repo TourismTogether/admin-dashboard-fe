@@ -25,7 +25,7 @@ const TaskItem: React.FC<{
       case "low":
         return "bg-blue-500/10 text-blue-500 border-blue-500/20";
       default:
-        return "bg-gray-500/10 text-gray-500 border-gray-500/20";
+        return "bg-muted text-muted-foreground border-border";
     }
   };
 
@@ -36,9 +36,9 @@ const TaskItem: React.FC<{
       case "in_progress":
         return "bg-blue-500/10 text-blue-500 border-blue-500/20";
       case "todo":
-        return "bg-gray-500/10 text-gray-500 border-gray-500/20";
+        return "bg-muted text-muted-foreground border-border";
       default:
-        return "bg-gray-500/10 text-gray-500 border-gray-500/20";
+        return "bg-muted text-muted-foreground border-border";
     }
   };
 

@@ -26,11 +26,11 @@ export function TaskCalendarSkeleton() {
 
       {/* Weekday row + day grid */}
       <div className="w-full overflow-x-auto">
-        <div className="grid w-full min-w-0 grid-cols-7 gap-0 overflow-hidden rounded-lg border border-gray-100">
+        <div className="grid w-full min-w-0 grid-cols-7 gap-0 overflow-hidden rounded-lg border border-border">
           {Array.from({ length: 7 }).map((_, i) => (
             <div
               key={`wd-${i}`}
-              className="border-b border-gray-100 bg-muted/50 px-0.5 py-2"
+              className="border-b border-border bg-muted/50 px-0.5 py-2"
             >
               <div className="mx-auto h-3 w-8 animate-pulse rounded bg-muted-foreground/20" />
             </div>
@@ -38,7 +38,7 @@ export function TaskCalendarSkeleton() {
           {Array.from({ length: 42 }).map((_, i) => (
             <div
               key={`cell-${i}`}
-              className="flex min-h-16 flex-col border border-gray-100 p-1 md:min-h-[110px] lg:min-h-[140px]"
+              className="flex min-h-16 flex-col border border-border p-1 md:min-h-[110px] lg:min-h-[140px]"
             >
               <div className="mb-1 h-4 w-6 animate-pulse rounded bg-muted/90" />
               <div className="mt-0.5 flex-1 space-y-1">

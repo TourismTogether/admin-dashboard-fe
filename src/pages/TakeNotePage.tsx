@@ -186,7 +186,7 @@ const TakeNotePage: React.FC = () => {
           </CardHeader>
           <CardContent>
             {items.length === 0 ? (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 No notes yet. Create one.
               </p>
             ) : (
@@ -198,8 +198,8 @@ const TakeNotePage: React.FC = () => {
                       onClick={() => setSelected(item)}
                       className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center justify-between gap-2 ${
                         selected?.id === item.id
-                          ? "bg-gray-200 font-medium"
-                          : "hover:bg-gray-100"
+                          ? "bg-primary/15 font-semibold text-primary"
+                          : "hover:bg-accent"
                       }`}
                     >
                       <span

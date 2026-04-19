@@ -466,7 +466,7 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                                           ? "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"
                                           : task.status === "in_progress"
                                           ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
-                                          : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                                          : "bg-muted text-foreground dark:bg-muted dark:text-foreground"
                                       )}
                                     >
                                       {task.status}
@@ -478,7 +478,7 @@ export const WeekTable: React.FC<WeekTableProps> = ({
                                           ? "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300"
                                           : task.priority === "medium"
                                           ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300"
-                                          : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                                          : "bg-muted text-foreground dark:bg-muted dark:text-foreground"
                                       )}
                                     >
                                       {task.priority}

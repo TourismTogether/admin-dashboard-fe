@@ -39,7 +39,7 @@ const getPriorityColor = (priority: string) => {
     case "low":
       return "bg-green-100 text-green-800";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-muted text-foreground";
   }
 };
 
@@ -54,7 +54,7 @@ const getStatusColor = (status: string) => {
     case "reopen":
       return "bg-red-100 text-red-800";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-muted text-foreground";
   }
 };
 
@@ -95,7 +95,7 @@ export const GroupTaskWeekView: React.FC<GroupTaskWeekViewProps> = ({
           <h3 className="text-lg font-semibold">
             Week of {format(weekStart, "MMM dd")} - {format(weekEnd, "MMM dd, yyyy")}
           </h3>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             {format(weekStart, "EEEE, MMMM d, yyyy")} to {format(weekEnd, "EEEE, MMMM d, yyyy")}
           </p>
         </div>
@@ -105,16 +105,16 @@ export const GroupTaskWeekView: React.FC<GroupTaskWeekViewProps> = ({
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="bg-gray-50 border-b">
+            <tr className="bg-muted/50 border-b">
               <th className="border-r px-4 py-3 text-left font-semibold w-48">Swimlane</th>
               {weekDates.map((date) => (
                 <th
                   key={format(date, "yyyy-MM-dd")}
-                  className="border-r px-4 py-3 text-left font-semibold bg-gray-50 min-w-[200px]"
+                  className="border-r px-4 py-3 text-left font-semibold bg-muted/50 min-w-[200px]"
                 >
                   <div>
                     <div className="text-sm font-semibold">{format(date, "EEE")}</div>
-                    <div className="text-xs text-gray-500">{format(date, "MMM dd")}</div>
+                    <div className="text-xs text-muted-foreground">{format(date, "MMM dd")}</div>
                   </div>
                 </th>
               ))}
@@ -122,8 +122,8 @@ export const GroupTaskWeekView: React.FC<GroupTaskWeekViewProps> = ({
           </thead>
           <tbody>
             {swimlanes.map((swimlane) => (
-              <tr key={swimlane.swimlaneId} className="border-b hover:bg-gray-50">
-                <td className="border-r px-4 py-3 font-medium bg-gray-50">
+              <tr key={swimlane.swimlaneId} className="border-b hover:bg-muted/50">
+                <td className="border-r px-4 py-3 font-medium bg-muted/50">
                   <div className="flex flex-col gap-1">
                     <span>{swimlane.content}</span>
                     {swimlane.assignedUserId && (

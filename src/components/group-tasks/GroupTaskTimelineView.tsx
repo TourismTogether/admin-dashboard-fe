@@ -39,7 +39,7 @@ interface GroupTaskTimelineViewProps {
 export const GroupTaskTimelineView: React.FC<GroupTaskTimelineViewProps> = ({ tasks }) => {
   if (!tasks || tasks.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="py-8 text-center text-muted-foreground">
         <p>No tasks to display in timeline</p>
       </div>
     );
@@ -68,20 +68,20 @@ export const GroupTaskTimelineView: React.FC<GroupTaskTimelineViewProps> = ({ ta
     <div className="space-y-4">
       <div>
         <h3 className="text-base sm:text-lg font-semibold">Timeline View</h3>
-        <p className="text-xs sm:text-sm text-gray-500">Task timeline - Each column = 1 day</p>
+        <p className="text-xs text-muted-foreground sm:text-sm">Task timeline - Each column = 1 day</p>
       </div>
       <div className="overflow-x-auto -mx-2 sm:mx-0">
         <div className="flex min-w-max">
           <div className="w-[120px] sm:w-[200px] flex-shrink-0 border-r">
             {/* Task names column */}
             <div className="border-b h-[40px] flex items-center px-2 sm:px-3">
-              <span className="text-xs sm:text-sm font-semibold text-gray-700">Tasks</span>
+              <span className="text-xs font-semibold text-foreground sm:text-sm">Tasks</span>
             </div>
-            <div className="border-b bg-gray-50 h-[40px]" />
+            <div className="h-[40px] border-b bg-muted/40" />
             <div className="relative">
               {tasks.map((task) => (
                 <div key={task.groupTaskId} className="h-[40px] flex items-center px-2 sm:px-3 border-b">
-                  <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                  <p className="truncate text-xs font-medium text-foreground sm:text-sm">
                     {task.requirement || "Untitled task"}
                   </p>
                 </div>
@@ -101,7 +101,7 @@ export const GroupTaskTimelineView: React.FC<GroupTaskTimelineViewProps> = ({ ta
                   return (
                     <div
                       key={idx}
-                      className="text-sm font-semibold text-gray-700 border-r border-gray-300 px-2 h-full flex items-center"
+                      className="flex h-full items-center border-r border-border px-2 text-sm font-semibold text-foreground"
                       style={{ width: `${width}px`, minWidth: `${width}px` }}
                     >
                       {format(month, "MMM")}
@@ -111,14 +111,14 @@ export const GroupTaskTimelineView: React.FC<GroupTaskTimelineViewProps> = ({ ta
               </div>
 
               {/* Day numbers row */}
-              <div className="flex items-center border-b bg-gray-50 overflow-visible h-[40px]">
+              <div className="flex h-[40px] items-center overflow-visible border-b bg-muted/40">
                 {Array.from({ length: totalDays }).map((_, idx) => {
                   const currentDate = addDays(timelineStart, idx);
                   const isToday = format(currentDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
                   return (
                     <div
                       key={idx}
-                      className={`text-xs text-center flex-shrink-0 border-r border-gray-200 h-full flex items-center justify-center ${isToday ? 'bg-blue-100 font-bold text-blue-700' : 'text-gray-600'}`}
+                      className={`flex h-full flex-shrink-0 items-center justify-center border-r border-border text-center text-xs ${isToday ? "bg-secondary/50 font-bold text-secondary-foreground" : "text-muted-foreground"}`}
                       style={{ width: `${dayWidth}px` }}
                     >
                       {format(currentDate, 'd')}
@@ -136,7 +136,7 @@ export const GroupTaskTimelineView: React.FC<GroupTaskTimelineViewProps> = ({ ta
                     return (
                       <div
                         key={idx}
-                        className={`border-r ${isToday ? 'border-blue-400 bg-blue-50/30' : 'border-gray-200'}`}
+                        className={`border-r ${isToday ? "border-primary/50 bg-primary/10" : "border-border"}`}
                         style={{ width: `${dayWidth}px`, minWidth: `${dayWidth}px` }}
                       />
                     );
@@ -160,7 +160,7 @@ export const GroupTaskTimelineView: React.FC<GroupTaskTimelineViewProps> = ({ ta
                       task.status === "in_progress" ? "bg-blue-500" :
                     task.status === "delay" ? "bg-red-500" :
                     task.status === "reopen" ? "bg-orange-500" :
-                    "bg-gray-400";
+                    "bg-muted-foreground/50";
 
                     return (
                       <div key={task.groupTaskId} className="relative flex items-center h-[40px] border-b">
