@@ -60,10 +60,10 @@ const DashboardLayout: React.FC = () => {
 
   const navLinkClass = (active: boolean) =>
     cn(
-      "block rounded-xl px-3 py-2.5 text-sm font-semibold tracking-tight transition-all duration-200 border border-transparent",
+      "block w-full px-3 py-2 text-left text-sm transition-colors",
       active
-        ? "bg-sidebar-primary/20 text-sidebar-primary shadow-sm shadow-sidebar-primary/10 ring-1 ring-sidebar-primary/35"
-        : "text-sidebar-foreground/85 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground hover:border-sidebar-border/60",
+        ? "bg-sidebar-primary/20 font-medium text-sidebar-primary"
+        : "text-sidebar-foreground/80 hover:bg-sidebar-accent/55 hover:text-sidebar-foreground",
     );
 
   return (
@@ -108,14 +108,11 @@ const DashboardLayout: React.FC = () => {
         </div>
         <div className="flex flex-1 flex-col overflow-hidden p-3">
           {user && (
-            <div
-              className="mb-3 truncate rounded-xl border border-sidebar-border/80 bg-sidebar-accent/30 px-3 py-2 text-xs font-medium text-sidebar-foreground/90"
-              title={user.email}
-            >
+            <p className="mb-3 truncate text-xs text-sidebar-foreground/70" title={user.email}>
               {user.email}
-            </div>
+            </p>
           )}
-          <nav className="grow space-y-1 overflow-y-auto pr-0.5">
+          <nav className="-mx-3 grow space-y-0.5 overflow-y-auto">
             {mainNavItems.map((item) => (
               <Link
                 key={item.path}
