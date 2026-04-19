@@ -203,21 +203,21 @@ function MermaidPreview({
   }
   if (!content.trim()) {
     return (
-      <div className="flex items-center justify-center rounded-md border border-dashed border-gray-300 bg-gray-50/50 p-8 text-gray-500">
+      <div className="flex items-center justify-center rounded-md border border-dashed border-border bg-muted/40 p-8 text-muted-foreground">
         Enter Mermaid code to preview
       </div>
     );
   }
   if (!svg) {
     return (
-      <div className="flex items-center justify-center rounded-md border border-gray-200 bg-gray-50/50 p-8 text-gray-500">
+      <div className="flex items-center justify-center rounded-md border border-border bg-muted/40 p-8 text-muted-foreground">
         Rendering…
       </div>
     );
   }
   return (
     <div
-      className="rounded-md border border-gray-200 bg-white p-4 overflow-auto min-h-[200px] flex items-center justify-center"
+      className="flex min-h-[200px] items-center justify-center overflow-auto rounded-md border border-border bg-card p-4"
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );
@@ -456,7 +456,7 @@ const BrainstormPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             {items.length === 0 ? (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 No diagrams yet. Create one.
               </p>
             ) : (
@@ -468,8 +468,8 @@ const BrainstormPage: React.FC = () => {
                       onClick={() => setSelected(item)}
                       className={`w-full text-left px-3 py-2 rounded-md text-sm flex items-center justify-between gap-2 ${
                         selected?.id === item.id
-                          ? "bg-gray-200 font-medium"
-                          : "hover:bg-gray-100"
+                          ? "bg-primary/15 font-semibold text-primary"
+                          : "hover:bg-accent"
                       }`}
                     >
                       <span

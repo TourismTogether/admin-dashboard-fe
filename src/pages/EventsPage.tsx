@@ -32,7 +32,7 @@ const EventCard: React.FC<{ event: EventItem; status: "active" | "soon" }> = ({
 }) => (
   <article
     key={event.eventId}
-    className={`group rounded-2xl border bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
+    className={`group rounded-2xl border border-border/80 bg-card p-5 shadow-md shadow-primary/5 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/10 ${
       status === "active" ? "border-emerald-500/30" : ""
     }`}
   >

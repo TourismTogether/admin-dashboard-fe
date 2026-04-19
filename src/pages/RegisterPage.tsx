@@ -12,7 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Wallet } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import {
   registerStart,
   registerSuccess,
@@ -83,12 +83,24 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="expressive-app-bg relative flex min-h-screen flex-col items-center justify-center overflow-hidden p-4">
+      <div
+        className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-primary/25 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -bottom-28 -left-20 h-80 w-80 rounded-full bg-secondary/40 blur-3xl"
+        aria-hidden
+      />
+      <Card className="relative w-full max-w-md border-primary/15 shadow-2xl shadow-primary/15">
         <CardHeader className="space-y-1">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Wallet className="h-6 w-6" />
-            <span className="font-bold text-xl">Admin Dashboard</span>
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/15 text-primary ring-2 ring-primary/25">
+              <Sparkles className="h-6 w-6" aria-hidden />
+            </span>
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-xl font-bold tracking-tight text-transparent">
+              Admin Dashboard
+            </span>
           </div>
           <CardTitle className="text-2xl text-center">Sign up</CardTitle>
           <CardDescription className="text-center">
@@ -170,7 +182,9 @@ const RegisterPage: React.FC = () => {
               />
             </div>
             {error && (
-              <div className="text-sm text-red-500 font-medium">{error}</div>
+              <div className="rounded-xl border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
+                {error}
+              </div>
             )}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">

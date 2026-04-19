@@ -189,7 +189,17 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
-        <Toaster richColors closeButton position="top-right" />
+        <Toaster
+          richColors
+          closeButton
+          position="top-right"
+          toastOptions={{
+            classNames: {
+              toast:
+                "rounded-xl border border-border/80 font-sans shadow-lg shadow-primary/10",
+            },
+          }}
+        />
         {isDev && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>
     </Provider>

@@ -483,13 +483,13 @@ const GroupTaskPage: React.FC = () => {
       case "in_progress":
         return "bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300";
       case "todo":
-        return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400";
+        return "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground";
       case "reopen":
         return "bg-orange-100 text-orange-800 dark:bg-orange-950/50 dark:text-orange-300";
       case "delay":
         return "bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300";
       default:
-        return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400";
+        return "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground";
     }
   };
 
@@ -701,7 +701,7 @@ const GroupTaskPage: React.FC = () => {
                 <div>
                   <h2 className="text-lg font-semibold">{selectedGroup?.name || "Group Tasks"}</h2>
                   {selectedGroup?.role && (
-                    <p className="text-sm text-gray-500 capitalize">Role: {selectedGroup.role}</p>
+                    <p className="text-sm text-muted-foreground capitalize">Role: {selectedGroup.role}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -947,14 +947,14 @@ const GroupTaskPage: React.FC = () => {
                                 />
                                 <div className="max-h-48 overflow-auto space-y-2">
                                   {filteredMembers.length === 0 ? (
-                                    <div className="text-sm text-gray-500 text-center py-4">
+                                    <div className="text-sm text-muted-foreground text-center py-4">
                                       {assigneeSearchQuery ? "No members found" : "No members available"}
                                     </div>
                                   ) : (
                                     filteredMembers.map((member) => (
                                       <div
                                         key={member.userId}
-                                        className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded cursor-pointer"
+                                        className="flex items-center gap-2 p-2 hover:bg-accent rounded cursor-pointer"
                                         onClick={() => {
                                           setSelectedAssignees((prev) =>
                                             prev.includes(member.userId)
@@ -973,9 +973,9 @@ const GroupTaskPage: React.FC = () => {
                                           <div className="text-sm font-medium truncate">
                                             {member.nickname || member.fullname || member.email}
                                           </div>
-                                          <div className="text-xs text-gray-500 truncate">{member.email}</div>
+                                          <div className="text-xs text-muted-foreground truncate">{member.email}</div>
                                         </div>
-                                        <span className="text-xs text-gray-600 capitalize flex-shrink-0">
+                                        <span className="text-xs text-muted-foreground capitalize flex-shrink-0">
                                           {member.role || "member"}
                                         </span>
                                       </div>
@@ -997,7 +997,7 @@ const GroupTaskPage: React.FC = () => {
                           </Popover>
 
                           {selectedAssignees.length > 0 && (
-                            <div className="flex flex-wrap gap-1 p-2 bg-gray-50 rounded">
+                            <div className="flex flex-wrap gap-1 p-2 bg-muted/50 rounded">
                               {selectedAssignees.map((id) => {
                                 const member = groupMembers.find((m) => m.userId === id);
                                 return member ? (
@@ -1019,7 +1019,7 @@ const GroupTaskPage: React.FC = () => {
                               })}
                             </div>
                           )}
-                          <p className="text-xs text-gray-500">Select one or more members to assign.</p>
+                          <p className="text-xs text-muted-foreground">Select one or more members to assign.</p>
                         </div>
                         <Button
                           disabled={!taskRequirement.trim() || createTask.isPending}
@@ -1070,7 +1070,7 @@ const GroupTaskPage: React.FC = () => {
                     </DialogHeader>
                     <div className="space-y-2 max-h-96 overflow-auto">
                       {groupMembers.length === 0 ? (
-                        <div className="text-sm text-gray-500">No members found</div>
+                        <div className="text-sm text-muted-foreground">No members found</div>
                       ) : (
                         groupMembers.map((member) => {
                           const isCurrentUser = currentUser?.userId === member.userId;
@@ -1088,10 +1088,10 @@ const GroupTaskPage: React.FC = () => {
                                     <span className="text-xs text-muted-foreground ml-1">(You)</span>
                                   )}
                                 </div>
-                                <div className="text-xs text-gray-500 truncate">{member.email}</div>
+                                <div className="text-xs text-muted-foreground truncate">{member.email}</div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-xs text-gray-600 capitalize">{member.role || "member"}</span>
+                                <span className="text-xs text-muted-foreground capitalize">{member.role || "member"}</span>
                                 {canKick && (
                                   <Button
                                     variant="ghost"
@@ -1114,7 +1114,7 @@ const GroupTaskPage: React.FC = () => {
               </div>
 
               <div className="bg-white border rounded-lg overflow-hidden shadow-sm">
-                <div className="flex items-center gap-2 p-2 border-b bg-gray-50">
+                <div className="flex items-center gap-2 p-2 border-b bg-muted/50">
                   <Button
                     variant={activeTab === "schedule" ? "default" : "ghost"}
                     size="sm"
@@ -1144,7 +1144,7 @@ const GroupTaskPage: React.FC = () => {
                 <div className="p-4">
                   {activeTab === "schedule" ? (
                     isLoadingTasks ? (
-                      <div className="text-gray-500 text-sm">Loading tasks...</div>
+                      <div className="text-muted-foreground text-sm">Loading tasks...</div>
                     ) : (
                       <GroupTaskWeekTable
                         tasks={tasksData?.data ?? []}
@@ -1172,7 +1172,7 @@ const GroupTaskPage: React.FC = () => {
                     )
                   ) : activeTab === "tasks" ? (
                     isLoadingTasks ? (
-                      <div className="text-gray-500 text-sm">Loading tasks...</div>
+                      <div className="text-muted-foreground text-sm">Loading tasks...</div>
                     ) : (
                       <div className="space-y-3">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -1259,11 +1259,11 @@ const GroupTaskPage: React.FC = () => {
                     )
                   ) : activeTab === "timeline" ? (
                     isLoadingTasks ? (
-                      <div className="text-gray-500 text-sm">Loading tasks...</div>
+                      <div className="text-muted-foreground text-sm">Loading tasks...</div>
                     ) : tasksData?.data && tasksData.data.length > 0 ? (
                       <GroupTaskTimelineView tasks={tasksData.data} />
                     ) : (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="text-center py-8 text-muted-foreground">
                         <p>No tasks to display in timeline</p>
                       </div>
                     )
@@ -1303,12 +1303,12 @@ const GroupTaskPage: React.FC = () => {
             const priorityClass: Record<string, string> = {
               high: "border-red-200 bg-red-100 text-red-800",
               medium: "border-amber-200 bg-amber-100 text-amber-800",
-              low: "border-slate-200 bg-slate-100 text-slate-700",
+              low: "border-border bg-muted text-foreground",
             };
             const statusClass: Record<string, string> = {
               done: "border-emerald-200 bg-emerald-100 text-emerald-800",
               in_progress: "border-blue-200 bg-blue-100 text-blue-800",
-              todo: "border-slate-200 bg-slate-100 text-slate-600",
+              todo: "border-border bg-muted/80 text-muted-foreground",
               reopen: "border-orange-200 bg-orange-100 text-orange-800",
               delay: "border-red-200 bg-red-100 text-red-800",
             };
@@ -1467,7 +1467,7 @@ const GroupTaskPage: React.FC = () => {
                     />
                     <div className="max-h-48 overflow-auto space-y-2">
                       {filteredMembers.length === 0 ? (
-                        <div className="text-sm text-gray-500 text-center py-4">
+                        <div className="text-sm text-muted-foreground text-center py-4">
                           {editAssigneeSearchQuery ? "No members found" : "No members available"}
                         </div>
                       ) : (
@@ -1480,7 +1480,7 @@ const GroupTaskPage: React.FC = () => {
                           .map((member) => (
                             <div
                               key={member.userId}
-                              className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded cursor-pointer"
+                              className="flex items-center gap-2 p-2 hover:bg-accent rounded cursor-pointer"
                               onClick={() => {
                                 setEditSelectedAssignees((prev) =>
                                   prev.includes(member.userId) ? prev.filter((id) => id !== member.userId) : [...prev, member.userId]
@@ -1495,9 +1495,9 @@ const GroupTaskPage: React.FC = () => {
                               />
                               <div className="flex-1 min-w-0">
                                 <div className="text-sm font-medium truncate">{member.nickname || member.fullname || member.email}</div>
-                                <div className="text-xs text-gray-500 truncate">{member.email}</div>
+                                <div className="text-xs text-muted-foreground truncate">{member.email}</div>
                               </div>
-                              <span className="text-xs text-gray-600 capitalize shrink-0">{member.role || "member"}</span>
+                              <span className="text-xs text-muted-foreground capitalize shrink-0">{member.role || "member"}</span>
                             </div>
                           ))
                       )}
@@ -1511,7 +1511,7 @@ const GroupTaskPage: React.FC = () => {
                 </PopoverContent>
               </Popover>
               {editSelectedAssignees.length > 0 && (
-                <div className="flex flex-wrap gap-1 p-2 bg-gray-50 rounded">
+                <div className="flex flex-wrap gap-1 p-2 bg-muted/50 rounded">
                   {editSelectedAssignees.map((id) => {
                     const member = groupMembers.find((m) => m.userId === id);
                     return member ? (
@@ -1525,7 +1525,7 @@ const GroupTaskPage: React.FC = () => {
                   })}
                 </div>
               )}
-              <p className="text-xs text-gray-500">Select one or more members to assign.</p>
+              <p className="text-xs text-muted-foreground">Select one or more members to assign.</p>
             </div>
             <Button
               disabled={!editTaskRequirement.trim() || updateTask.isPending}

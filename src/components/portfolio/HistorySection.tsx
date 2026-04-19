@@ -26,7 +26,7 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ tasks, isLoading
       case "low":
         return "bg-blue-500/10 text-blue-500 border-blue-500/20";
       default:
-        return "bg-gray-500/10 text-gray-500 border-gray-500/20";
+        return "bg-muted text-muted-foreground border-border";
     }
   };
 
@@ -37,13 +37,13 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ tasks, isLoading
       case "in_progress":
         return "bg-blue-500/10 text-blue-500 border-blue-500/20";
       case "todo":
-        return "bg-gray-500/10 text-gray-500 border-gray-500/20";
+        return "bg-muted text-muted-foreground border-border";
       case "reopen":
         return "bg-orange-500/10 text-orange-500 border-orange-500/20";
       case "delay":
         return "bg-purple-500/10 text-purple-500 border-purple-500/20";
       default:
-        return "bg-gray-500/10 text-gray-500 border-gray-500/20";
+        return "bg-muted text-muted-foreground border-border";
     }
   };
 
