@@ -22,8 +22,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api";
+import { getStoredTheme, isThemeId, setTheme, THEME_OPTIONS, type ThemeId } from "@/lib/theme";
 import { Loader2, Mail, MessageSquare, Plus, Pencil, Trash2, Eye } from "lucide-react";
 
 interface PersonalTaskEmailSettings {
@@ -48,6 +56,7 @@ const SettingsPage: React.FC = () => {
   const [feedbackReason, setFeedbackReason] = useState("");
   const [deleteFeedbackId, setDeleteFeedbackId] = useState<string | null>(null);
   const [viewFeedback, setViewFeedback] = useState<FeedbackItem | null>(null);
+  const [selectedTheme, setSelectedTheme] = useState<ThemeId>(() => getStoredTheme());
 
   // Fetch current settings (used for loading state; email form disabled for now)
   const { isLoading } = useQuery<{
@@ -167,6 +176,12 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  const handleThemeChange = (themeId: ThemeId) => {
+    setSelectedTheme(themeId);
+    setTheme(themeId);
+    toast.success("Theme updated");
+  };
+
   // handleSubmit for email settings (form currently disabled)
   // const handleSubmit = (e: React.FormEvent) => { ... };
 
@@ -186,6 +201,38 @@ const SettingsPage: React.FC = () => {
           Manage your application preferences
         </p>
       </div>
+
+      {/* Email feature temporarily disabled (incomplete / has bugs) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Theme</CardTitle>
+          <CardDescription>
+            Choose a color theme for the dashboard.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Label htmlFor="theme-select">Current theme</Label>
+          <Select
+            value={selectedTheme}
+            onValueChange={(value) => {
+              if (isThemeId(value)) {
+                handleThemeChange(value);
+              }
+            }}
+          >
+            <SelectTrigger id="theme-select" className="max-w-sm">
+              <SelectValue placeholder="Select a theme" />
+            </SelectTrigger>
+            <SelectContent>
+              {THEME_OPTIONS.map((theme) => (
+                <SelectItem key={theme.id} value={theme.id}>
+                  {theme.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
 
       {/* Email feature temporarily disabled (incomplete / has bugs) */}
       <Card>

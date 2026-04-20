@@ -12,6 +12,7 @@ import { Provider } from "react-redux";
 import { Toaster } from "sonner";
 import "./index.css";
 import { store } from "./store/store";
+import { initializeTheme } from "./lib/theme";
 import RootLayout from "./layouts/RootLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
 import PersonalTaskPage from "./pages/PersonalTaskPage";
@@ -183,6 +184,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+initializeTheme();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
