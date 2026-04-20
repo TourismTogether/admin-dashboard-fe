@@ -1,5 +1,4 @@
 export type ThemeId =
-  | "black-white"
   | "white-black"
   | "pink-white"
   | "green-white"
@@ -13,14 +12,13 @@ export interface ThemeOption {
 export const THEME_STORAGE_KEY = "dashboard_theme";
 
 export const THEME_OPTIONS: ThemeOption[] = [
-  { id: "black-white", label: "Black - White" },
   { id: "white-black", label: "White - Black" },
   { id: "pink-white", label: "Pink - White" },
   { id: "green-white", label: "Green - White" },
   { id: "blue-white", label: "Blue - White" },
 ];
 
-export const DEFAULT_THEME: ThemeId = "black-white";
+export const DEFAULT_THEME: ThemeId = "white-black";
 
 export const isThemeId = (value: string): value is ThemeId =>
   THEME_OPTIONS.some((theme) => theme.id === value);

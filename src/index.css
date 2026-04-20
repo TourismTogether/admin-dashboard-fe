@@ -47,8 +47,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-:root,
-:root[data-theme="black-white"] {
+:root {
   --font-sans: "IBM Plex Mono", ui-monospace, "Cascadia Code", monospace;
   --radius: 0.875rem;
 
