@@ -99,7 +99,7 @@ const RegisterPage: React.FC = () => {
               <Sparkles className="h-6 w-6" aria-hidden />
             </span>
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-xl font-bold tracking-tight text-transparent">
-              Admin Dashboard
+              Duckilot Admin Dashboard
             </span>
           </div>
           <CardTitle className="text-2xl text-center">Sign up</CardTitle>

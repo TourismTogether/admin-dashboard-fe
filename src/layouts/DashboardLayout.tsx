@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Menu, Sparkles, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout, selectAuthUser, selectAuthToken, setUser } from "@/store/authSlice";
 import type { AppDispatch } from "@/store/store";
@@ -82,18 +82,17 @@ const DashboardLayout: React.FC = () => {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-16 items-center justify-between gap-2 border-b border-sidebar-border px-4 md:px-4">
-          <div className="flex min-w-0 items-center gap-2">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sidebar-primary/25 text-sidebar-primary ring-1 ring-sidebar-primary/40">
-              <Sparkles className="h-4 w-4" aria-hidden />
-            </div>
-            <div className="min-w-0 leading-tight">
-              <span className="block truncate bg-gradient-to-r from-sidebar-primary to-primary bg-clip-text font-bold tracking-tight text-transparent">
-                Admin
+        <div className="flex items-start justify-between gap-2 border-b border-sidebar-border px-4 py-3">
+          <div className="min-w-0">
+            <div className="leading-tight">
+              <span className="block whitespace-normal wrap-break-word bg-linear-to-r from-sidebar-primary to-primary bg-clip-text text-sm font-bold tracking-tight text-transparent">
+                Duckilot Admin Dashboard
               </span>
-              <span className="block truncate text-[10px] font-medium uppercase tracking-widest text-sidebar-foreground/55">
-                Dashboard
-              </span>
+              {user && (
+                <p className="mt-1 truncate text-xs text-sidebar-foreground/70" title={user.email}>
+                  {user.email}
+                </p>
+              )}
             </div>
           </div>
           <Button
@@ -107,11 +106,6 @@ const DashboardLayout: React.FC = () => {
           </Button>
         </div>
         <div className="flex flex-1 flex-col overflow-hidden p-3">
-          {user && (
-            <p className="mb-3 truncate text-xs text-sidebar-foreground/70" title={user.email}>
-              {user.email}
-            </p>
-          )}
           <nav className="-mx-3 grow space-y-0.5 overflow-y-auto">
             {mainNavItems.map((item) => (
               <Link
