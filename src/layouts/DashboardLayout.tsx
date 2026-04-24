@@ -3,7 +3,12 @@ import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { logout, selectAuthUser, selectAuthToken, setUser } from "@/store/authSlice";
+import {
+  logout,
+  selectAuthUser,
+  selectAuthToken,
+  setUser,
+} from "@/store/authSlice";
 import type { AppDispatch } from "@/store/store";
 import { apiRequest } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -14,7 +19,7 @@ const mainNavItems = [
   { path: "/portfolio", label: "Portfolio" },
   { path: "/leaderboard", label: "Leaderboard" },
   { path: "/brainstorm", label: "Brainstorm" },
-  { path: "/take-note", label: "Take note" },
+  { path: "/take-note", label: "Take Note" },
   { path: "/settings", label: "Settings" },
 ];
 const eventNavItem = { path: "/events", label: "Events" };
@@ -89,7 +94,10 @@ const DashboardLayout: React.FC = () => {
                 Duckilot Admin Dashboard
               </span>
               {user && (
-                <p className="mt-1 truncate text-xs text-sidebar-foreground/70" title={user.email}>
+                <p
+                  className="mt-1 truncate text-xs text-sidebar-foreground/70"
+                  title={user.email}
+                >
                   {user.email}
                 </p>
               )}
@@ -162,7 +170,9 @@ const DashboardLayout: React.FC = () => {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <span className="text-sm font-semibold text-muted-foreground">Menu</span>
+          <span className="text-sm font-semibold text-muted-foreground">
+            Menu
+          </span>
         </header>
         <main className="expressive-app-bg flex-1 overflow-auto p-4 md:p-6">
           <Outlet />
