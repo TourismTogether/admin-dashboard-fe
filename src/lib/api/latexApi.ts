@@ -76,7 +76,8 @@ export async function compileLatexDocument(
     const json = await res.json().catch(() => null);
     const error = new Error(
       (json?.error || json?.message || "Compilation failed") as string,
-    ) as Error & { log?: string };
+    ) as Error & { code?: string; log?: string };
+    error.code = json?.error;
     error.log = json?.log;
     throw error;
   }

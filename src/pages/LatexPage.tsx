@@ -145,8 +145,20 @@ const LatexPage: React.FC = () => {
       setCompileEngine(data.engine);
       toast.success("Compiled");
     },
-    onError: (e: Error & { log?: string }) => {
+    onError: (e: Error & { code?: string; log?: string }) => {
       setCompileLog(e.log || e.message);
+      if (e.code === "latex_quota_exceeded") {
+        toast.error(
+          "Tính năng biên dịch LaTeX đang tạm hết lượt dùng. Mong bạn thông cảm và thử lại sau.",
+        );
+        return;
+      }
+      if (e.code === "latex_rate_limited") {
+        toast.error(
+          "Dịch vụ biên dịch LaTeX đang bận. Mong bạn thông cảm và thử lại sau ít phút.",
+        );
+        return;
+      }
       toast.error(e.message);
     },
   });
