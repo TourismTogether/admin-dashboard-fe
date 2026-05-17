@@ -23,6 +23,7 @@ import SelfStudyPage from "./pages/SelfStudyPage";
 import SettingsPage from "./pages/SettingsPage";
 import BrainstormPage from "./pages/BrainstormPage";
 import TakeNotePage from "./pages/TakeNotePage";
+import LatexPage from "./pages/LatexPage";
 import AdminFeedbackPage from "./pages/AdminFeedbackPage";
 import EventsPage from "./pages/EventsPage";
 import AdminEventsPage from "./pages/AdminEventsPage";
@@ -121,6 +122,14 @@ const router = createBrowserRouter([
             element: (
               <ProtectedRoute>
                 <TakeNotePage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "latex",
+            element: (
+              <ProtectedRoute>
+                <LatexPage />
               </ProtectedRoute>
             ),
           },
