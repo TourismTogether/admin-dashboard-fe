@@ -29,6 +29,7 @@ import AdminFeedbackPage from "./pages/AdminFeedbackPage";
 import EventsPage from "./pages/EventsPage";
 import AdminEventsPage from "./pages/AdminEventsPage";
 import ShareTablePage from "./pages/ShareTablePage";
+import NotFoundPage from "./pages/NotFoundPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -174,6 +175,10 @@ const router = createBrowserRouter([
             index: true,
             element: <Navigate to="/personal-tasks" replace />,
           },
+          {
+            path: "*",
+            element: <NotFoundPage />,
+          },
         ],
       },
       // Share table page (same sidebar layout; login required)
@@ -189,9 +194,21 @@ const router = createBrowserRouter([
             path: "table/:shareId",
             element: <ShareTablePage />,
           },
+          {
+            path: "*",
+            element: <NotFoundPage />,
+          },
         ],
       },
+      {
+        path: "*",
+        element: <NotFoundPage />,
+      },
     ],
+  },
+  {
+    path: "*",
+    element: <NotFoundPage />,
   },
 ]);
 
