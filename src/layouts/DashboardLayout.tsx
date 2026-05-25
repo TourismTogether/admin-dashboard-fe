@@ -18,6 +18,7 @@ const mainNavItems = [
   { path: "/group-tasks", label: "Group Tasks" },
   { path: "/portfolio", label: "Portfolio" },
   { path: "/leaderboard", label: "Leaderboard" },
+  { path: "/research", label: "Research" },
   { path: "/brainstorm", label: "Brainstorm" },
   { path: "/take-note", label: "Take Note" },
   { path: "/latex", label: "Latex" },

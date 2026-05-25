@@ -22,6 +22,7 @@ import LeaderboardPage from "./pages/LeaderboardPage";
 import SelfStudyPage from "./pages/SelfStudyPage";
 import SettingsPage from "./pages/SettingsPage";
 import BrainstormPage from "./pages/BrainstormPage";
+import ResearchPage from "./pages/ResearchPage";
 import TakeNotePage from "./pages/TakeNotePage";
 import LatexPage from "./pages/LatexPage";
 import AdminFeedbackPage from "./pages/AdminFeedbackPage";
@@ -114,6 +115,14 @@ const router = createBrowserRouter([
             element: (
               <ProtectedRoute>
                 <BrainstormPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "research",
+            element: (
+              <ProtectedRoute>
+                <ResearchPage />
               </ProtectedRoute>
             ),
           },
