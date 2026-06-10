@@ -4,13 +4,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  logout,
   selectAuthUser,
   selectAuthToken,
   setUser,
 } from "@/store/authSlice";
 import type { AppDispatch } from "@/store/store";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, logoutSession } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const mainNavItems = [
@@ -60,8 +59,8 @@ const DashboardLayout: React.FC = () => {
 
   const isAdmin = user?.isAdmin === true;
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    await logoutSession();
     navigate("/login");
   };
 

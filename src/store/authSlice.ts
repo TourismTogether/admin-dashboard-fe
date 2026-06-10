@@ -76,6 +76,11 @@ export const authSlice = createSlice({
       state.error = null;
       localStorage.removeItem('access_token');
     },
+    tokenRefreshed: (state, action: PayloadAction<string>) => {
+      state.isAuthenticated = true;
+      state.token = action.payload;
+      localStorage.setItem('access_token', action.payload);
+    },
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
     },
@@ -93,6 +98,7 @@ export const {
   registerSuccess,
   registerFailure,
   logout,
+  tokenRefreshed,
   setUser,
   clearError,
 } = authSlice.actions;
