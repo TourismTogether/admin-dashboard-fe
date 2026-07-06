@@ -31,6 +31,7 @@ import { TaskCalendarView } from "@/components/personal-tasks/task-summary/TaskC
 import { TaskDetailDialog } from "@/components/personal-tasks/dialogs/TaskDetailDialog";
 import { PerformanceStats } from "@/components/personal-tasks/performance-stats/PerformanceStats";
 import { isOptimisticTaskId } from "@/components/personal-tasks/shared/utils";
+import { TodayLearningNotesSection } from "@/components/personal-tasks/learning-notes/TodayLearningNotesSection";
 
 interface TableWeek {
   tableId: string;
@@ -1453,6 +1454,8 @@ const PersonalTaskPage: React.FC = () => {
           />
         )}
       </div>
+
+      <TodayLearningNotesSection />
 
       {showTasksSection && (
         <>

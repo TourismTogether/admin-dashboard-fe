@@ -24,6 +24,7 @@ import SettingsPage from "./pages/SettingsPage";
 import BrainstormPage from "./pages/BrainstormPage";
 import ResearchPage from "./pages/ResearchPage";
 import TakeNotePage from "./pages/TakeNotePage";
+import LearningNotesPage from "./pages/LearningNotesPage";
 import LatexPage from "./pages/LatexPage";
 import AdminFeedbackPage from "./pages/AdminFeedbackPage";
 import EventsPage from "./pages/EventsPage";
@@ -133,6 +134,14 @@ const router = createBrowserRouter([
             element: (
               <ProtectedRoute>
                 <TakeNotePage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "learning-notes",
+            element: (
+              <ProtectedRoute>
+                <LearningNotesPage />
               </ProtectedRoute>
             ),
           },

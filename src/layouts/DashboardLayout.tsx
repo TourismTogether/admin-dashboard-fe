@@ -20,6 +20,7 @@ const mainNavItems = [
   { path: "/research", label: "Research" },
   { path: "/brainstorm", label: "Brainstorm" },
   { path: "/take-note", label: "Take Note" },
+  { path: "/learning-notes", label: "Learning Notes" },
   { path: "/latex", label: "Latex" },
   { path: "/settings", label: "Settings" },
 ];
