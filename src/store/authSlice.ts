@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from './store';
 
-interface User {
+export interface User {
   userId: string;
   email: string;
   account: string;
@@ -16,6 +16,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  sessionChecked: boolean;
   error: string | null;
 }
 
@@ -24,6 +25,7 @@ const initialState: AuthState = {
   user: null,
   isAuthenticated: !!localStorage.getItem('access_token'),
   isLoading: false,
+  sessionChecked: false,
   error: null,
 };
 
@@ -40,6 +42,7 @@ export const authSlice = createSlice({
       state.isAuthenticated = true;
       state.token = action.payload.token;
       state.user = action.payload.user;
+      state.sessionChecked = true;
       localStorage.setItem('access_token', action.payload.token);
     },
     loginFailure: (state, action: PayloadAction<string>) => {
@@ -48,6 +51,7 @@ export const authSlice = createSlice({
       state.token = null;
       state.user = null;
       state.error = action.payload;
+      state.sessionChecked = true;
       localStorage.removeItem('access_token');
     },
     registerStart: (state) => {
@@ -59,6 +63,7 @@ export const authSlice = createSlice({
       state.isAuthenticated = true;
       state.token = action.payload.token;
       state.user = action.payload.user;
+      state.sessionChecked = true;
       localStorage.setItem('access_token', action.payload.token);
     },
     registerFailure: (state, action: PayloadAction<string>) => {
@@ -67,6 +72,7 @@ export const authSlice = createSlice({
       state.token = null;
       state.user = null;
       state.error = action.payload;
+      state.sessionChecked = true;
       localStorage.removeItem('access_token');
     },
     logout: (state) => {
@@ -74,6 +80,7 @@ export const authSlice = createSlice({
       state.token = null;
       state.user = null;
       state.error = null;
+      state.sessionChecked = true;
       localStorage.removeItem('access_token');
     },
     tokenRefreshed: (state, action: PayloadAction<string>) => {
@@ -83,6 +90,14 @@ export const authSlice = createSlice({
     },
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
+    },
+    sessionCheckStart: (state) => {
+      state.isLoading = true;
+      state.error = null;
+    },
+    sessionCheckFinished: (state) => {
+      state.isLoading = false;
+      state.sessionChecked = true;
     },
     clearError: (state) => {
       state.error = null;
@@ -100,6 +115,8 @@ export const {
   logout,
   tokenRefreshed,
   setUser,
+  sessionCheckStart,
+  sessionCheckFinished,
   clearError,
 } = authSlice.actions;
 
@@ -109,6 +126,7 @@ export const selectAuthToken = (state: RootState) => state.auth.token;
 export const selectAuthUser = (state: RootState) => state.auth.user;
 export const selectIsAdmin = (state: RootState) => !!state.auth.user?.isAdmin;
 export const selectAuthLoading = (state: RootState) => state.auth.isLoading;
+export const selectSessionChecked = (state: RootState) => state.auth.sessionChecked;
 export const selectAuthError = (state: RootState) => state.auth.error;
 
 export default authSlice.reducer;

@@ -2,7 +2,11 @@ import { store } from "@/store/store";
 import {
   logout,
   selectAuthToken,
+  sessionCheckFinished,
+  sessionCheckStart,
+  setUser,
   tokenRefreshed,
+  type User,
 } from "@/store/authSlice";
 
 /** Base URL for API (use VITE_API_URL in production). */
@@ -19,9 +23,13 @@ async function refreshAccessToken(): Promise<string | null> {
     })
       .then(async (response) => {
         if (!response.ok) return null;
-        const data = (await response.json()) as { access_token?: string };
+        const data = (await response.json()) as {
+          access_token?: string;
+          user?: User;
+        };
         if (!data.access_token) return null;
         store.dispatch(tokenRefreshed(data.access_token));
+        if (data.user) store.dispatch(setUser(data.user));
         return data.access_token;
       })
       .catch(() => null)
@@ -31,6 +39,63 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 
   return refreshPromise;
+}
+
+export async function initializeSession(): Promise<void> {
+  store.dispatch(sessionCheckStart());
+
+  try {
+    let token = selectAuthToken(store.getState());
+    if (!token) {
+      token = await refreshAccessToken();
+    }
+
+    if (!token) {
+      store.dispatch(logout());
+      return;
+    }
+
+    const response = await fetch(`${API_URL}/api/auth/me`, {
+      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 401) {
+      const refreshedToken = await refreshAccessToken();
+      if (!refreshedToken) {
+        store.dispatch(logout());
+        return;
+      }
+
+      const retryResponse = await fetch(`${API_URL}/api/auth/me`, {
+        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${refreshedToken}`,
+        },
+      });
+
+      if (!retryResponse.ok) {
+        store.dispatch(logout());
+        return;
+      }
+
+      const retryData = (await retryResponse.json()) as { user?: User };
+      if (retryData.user) store.dispatch(setUser(retryData.user));
+      return;
+    }
+
+    if (!response.ok) {
+      store.dispatch(logout());
+      return;
+    }
+
+    const data = (await response.json()) as { user?: User };
+    if (data.user) store.dispatch(setUser(data.user));
+  } finally {
+    store.dispatch(sessionCheckFinished());
+  }
 }
 
 function redirectToLogin() {
