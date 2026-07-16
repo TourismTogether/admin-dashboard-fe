@@ -13,16 +13,10 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/api";
-
-interface LearningNote {
-  noteId: string;
-  userId: string;
-  noteDate: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { DailyScorePicker } from "./DailyScorePicker";
+import type { LearningNote } from "./types";
 
 const todayDate = () => format(new Date(), "yyyy-MM-dd");
 
@@ -30,6 +24,7 @@ export const TodayLearningNotesSection: React.FC = () => {
   const queryClient = useQueryClient();
   const today = useMemo(todayDate, []);
   const [content, setContent] = useState("");
+  const [dailyScore, setDailyScore] = useState<number | null>(null);
 
   const { data: todayNoteData, isLoading: isLoadingTodayNote } = useQuery<{
     data: LearningNote | null;
@@ -46,15 +41,25 @@ export const TodayLearningNotesSection: React.FC = () => {
 
   useEffect(() => {
     setContent(todayNoteData?.data?.content ?? "");
-  }, [todayNoteData?.data?.content]);
+    setDailyScore(todayNoteData?.data?.dailyScore ?? null);
+  }, [todayNoteData?.data?.content, todayNoteData?.data?.dailyScore]);
 
   const saveNoteMutation = useMutation({
-    mutationFn: async (nextContent: string) => {
+    mutationFn: async ({
+      nextContent,
+      nextDailyScore,
+    }: {
+      nextContent: string;
+      nextDailyScore: number | null;
+    }) => {
       const response = await apiRequest(
         `/api/personal-tasks/learning-notes/${today}`,
         {
           method: "PUT",
-          body: JSON.stringify({ content: nextContent }),
+          body: JSON.stringify({
+            content: nextContent,
+            dailyScore: nextDailyScore,
+          }),
         }
       );
       if (!response.ok) throw new Error("Failed to save learning note");
@@ -72,7 +77,10 @@ export const TodayLearningNotesSection: React.FC = () => {
     },
   });
 
-  const hasUnsavedChanges = content !== (todayNoteData?.data?.content ?? "");
+  const savedContent = todayNoteData?.data?.content ?? "";
+  const savedDailyScore = todayNoteData?.data?.dailyScore ?? null;
+  const hasUnsavedChanges =
+    content !== savedContent || dailyScore !== savedDailyScore;
   const canSave = !isLoadingTodayNote && !saveNoteMutation.isPending;
 
   return (
@@ -96,7 +104,12 @@ export const TodayLearningNotesSection: React.FC = () => {
               </Link>
             </Button>
             <Button
-              onClick={() => saveNoteMutation.mutate(content)}
+              onClick={() =>
+                saveNoteMutation.mutate({
+                  nextContent: content,
+                  nextDailyScore: dailyScore,
+                })
+              }
               disabled={!canSave || !hasUnsavedChanges}
               className="w-full sm:w-auto"
             >
@@ -112,14 +125,27 @@ export const TodayLearningNotesSection: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-4 p-4 pt-0 sm:p-5 sm:pt-0">
         {isLoadingTodayNote ? (
-          <div className="h-32 rounded-xl bg-muted animate-pulse" />
+          <div className="space-y-3">
+            <div className="h-10 rounded-xl bg-muted animate-pulse" />
+            <div className="h-32 rounded-xl bg-muted animate-pulse" />
+          </div>
         ) : (
-          <Textarea
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
-            placeholder="Write the concepts, links, commands, bugs, or small wins you want future-you to remember."
-            className="min-h-32 resize-y"
-          />
+          <>
+            <div className="space-y-2">
+              <Label>Daily score</Label>
+              <DailyScorePicker
+                value={dailyScore}
+                onChange={setDailyScore}
+                disabled={saveNoteMutation.isPending}
+              />
+            </div>
+            <Textarea
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+              placeholder="Write the concepts, links, commands, bugs, or small wins you want future-you to remember."
+              className="min-h-32 resize-y"
+            />
+          </>
         )}
       </CardContent>
     </Card>

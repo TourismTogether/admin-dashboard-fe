@@ -47,15 +47,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiRequest } from "@/lib/api";
-
-interface LearningNote {
-  noteId: string;
-  userId: string;
-  noteDate: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import {
+  DailyScoreBadge,
+  DailyScorePicker,
+} from "@/components/personal-tasks/learning-notes/DailyScorePicker";
+import type { LearningNote } from "@/components/personal-tasks/learning-notes/types";
 
 const columnHelper = createColumnHelper<LearningNote>();
 
@@ -72,8 +68,10 @@ const LearningNotesPage: React.FC = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createDate, setCreateDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [createContent, setCreateContent] = useState("");
+  const [createDailyScore, setCreateDailyScore] = useState<number | null>(null);
   const [editingNote, setEditingNote] = useState<LearningNote | null>(null);
   const [editingContent, setEditingContent] = useState("");
+  const [editingDailyScore, setEditingDailyScore] = useState<number | null>(null);
   const [deletingNote, setDeletingNote] = useState<LearningNote | null>(null);
 
   const {
@@ -96,15 +94,17 @@ const LearningNotesPage: React.FC = () => {
     mutationFn: async ({
       noteDate,
       content,
+      dailyScore,
     }: {
       noteDate: string;
       content: string;
+      dailyScore: number | null;
     }) => {
       const response = await apiRequest(
         `/api/personal-tasks/learning-notes/${noteDate}`,
         {
           method: "PUT",
-          body: JSON.stringify({ content }),
+          body: JSON.stringify({ content, dailyScore }),
         }
       );
       if (!response.ok) throw new Error("Failed to update learning note");
@@ -116,6 +116,7 @@ const LearningNotesPage: React.FC = () => {
       });
       setEditingNote(null);
       setEditingContent("");
+      setEditingDailyScore(null);
       toast.success("Learning note updated");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -146,15 +147,17 @@ const LearningNotesPage: React.FC = () => {
     mutationFn: async ({
       noteDate,
       content,
+      dailyScore,
     }: {
       noteDate: string;
       content: string;
+      dailyScore: number | null;
     }) => {
       const response = await apiRequest(
         `/api/personal-tasks/learning-notes/${noteDate}`,
         {
           method: "PUT",
-          body: JSON.stringify({ content }),
+          body: JSON.stringify({ content, dailyScore }),
         }
       );
       if (!response.ok) throw new Error("Failed to create learning note");
@@ -167,6 +170,7 @@ const LearningNotesPage: React.FC = () => {
       setIsCreateOpen(false);
       setCreateDate(format(new Date(), "yyyy-MM-dd"));
       setCreateContent("");
+      setCreateDailyScore(null);
       toast.success("Learning note created");
     },
     onError: (err: Error) => toast.error(err.message),
@@ -175,6 +179,7 @@ const LearningNotesPage: React.FC = () => {
   const handleEdit = (note: LearningNote) => {
     setEditingNote(note);
     setEditingContent(note.content);
+    setEditingDailyScore(note.dailyScore ?? null);
   };
 
   const columns = useMemo(
@@ -212,6 +217,11 @@ const LearningNotesPage: React.FC = () => {
           </div>
         ),
         size: 150,
+      }),
+      columnHelper.accessor("dailyScore", {
+        header: "Score",
+        cell: (info) => <DailyScoreBadge score={info.getValue()} />,
+        size: 100,
       }),
       columnHelper.accessor("content", {
         header: "Note",
@@ -475,6 +485,10 @@ const LearningNotesPage: React.FC = () => {
             </DialogTitle>
             <DialogDescription>Daily learning note detail.</DialogDescription>
           </DialogHeader>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Daily score:</span>
+            <DailyScoreBadge score={viewingNote?.dailyScore} />
+          </div>
           <div className="max-h-[55vh] overflow-y-auto whitespace-pre-wrap rounded-xl border bg-card p-4 text-sm leading-relaxed">
             {viewingNote?.content.trim() || "Empty note"}
           </div>
@@ -488,6 +502,7 @@ const LearningNotesPage: React.FC = () => {
           if (!open) {
             setCreateDate(format(new Date(), "yyyy-MM-dd"));
             setCreateContent("");
+            setCreateDailyScore(null);
           }
         }}
       >
@@ -506,6 +521,14 @@ const LearningNotesPage: React.FC = () => {
                 type="date"
                 value={createDate}
                 onChange={(event) => setCreateDate(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Daily score</Label>
+              <DailyScorePicker
+                value={createDailyScore}
+                onChange={setCreateDailyScore}
+                disabled={createNoteMutation.isPending}
               />
             </div>
             <div className="space-y-2">
@@ -532,6 +555,7 @@ const LearningNotesPage: React.FC = () => {
                 createNoteMutation.mutate({
                   noteDate: createDate,
                   content: createContent,
+                  dailyScore: createDailyScore,
                 })
               }
               disabled={!createDate || createNoteMutation.isPending}
@@ -548,6 +572,7 @@ const LearningNotesPage: React.FC = () => {
           if (!open) {
             setEditingNote(null);
             setEditingContent("");
+            setEditingDailyScore(null);
           }
         }}
       >
@@ -561,6 +586,14 @@ const LearningNotesPage: React.FC = () => {
             </DialogTitle>
             <DialogDescription>Update this daily learning note.</DialogDescription>
           </DialogHeader>
+          <div className="space-y-2">
+            <Label>Daily score</Label>
+            <DailyScorePicker
+              value={editingDailyScore}
+              onChange={setEditingDailyScore}
+              disabled={updateNoteMutation.isPending}
+            />
+          </div>
           <Textarea
             value={editingContent}
             onChange={(event) => setEditingContent(event.target.value)}
@@ -572,6 +605,7 @@ const LearningNotesPage: React.FC = () => {
               onClick={() => {
                 setEditingNote(null);
                 setEditingContent("");
+                setEditingDailyScore(null);
               }}
               disabled={updateNoteMutation.isPending}
             >
@@ -583,6 +617,7 @@ const LearningNotesPage: React.FC = () => {
                 updateNoteMutation.mutate({
                   noteDate: editingNote.noteDate,
                   content: editingContent,
+                  dailyScore: editingDailyScore,
                 })
               }
               disabled={updateNoteMutation.isPending}
